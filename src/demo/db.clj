@@ -126,6 +126,13 @@
     #(.startsWith (first %) prefix) 
     (table-details)))
 
+(defn
+  gb
+  []
+  (filter 
+    #(.startsWith (first %) table-prefix) 
+    (group-by :table_name (get-columns))))
+
 (def
   table-set
   "Set of all tables"
