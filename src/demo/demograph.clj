@@ -98,4 +98,10 @@
   "Breadth first search algorithm on dg"
   [start end net]
   (bfs end (list (list start)) net))
+
+(defn 
+  shortest-path-wdg  
+  "Breadth first search algorithm on dg"
+  [start end wdgnet]
+  (bfs end (list (list start)) (get-dg-from-wdg wdgnet)))
   
