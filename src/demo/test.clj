@@ -47,3 +47,5 @@
   []
   (db-map lst #{}))
 
+(def testmap {"z_1" "a" , "z_3" "b", "x_2" "c"})
+
