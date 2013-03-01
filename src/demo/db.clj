@@ -1,6 +1,10 @@
 (ns demo.db
   (:require [clojure.java.jdbc :as jdbc]))
 
+; Change following attrbute as per database
+; valid values : postgres, oracle, mysql
+(def db-type "postgres")
+
 ; Oracle
 (def o-driver "oracle.jdbc.driver.OracleDriver")
 (def o-url "jdbc:oracle:thin:jagdish/jagdish@(DESCRIPTION=(ADDRESS = (PROTOCOL = TCP)(HOST =172.21.75.55)(PORT = 1522))(ADDRESS = (PROTOCOL = TCP)(HOST = 172.21.75.55)(PORT = 1522))(LOAD_BALANCE = yes)(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = amsdb)))")
@@ -15,12 +19,11 @@
 (def p-user "postgres")
 (def p-pwd "postgres")
 
-(def db-types {:oracle "oracle" :mysql "mysql" :postgres "postgres"})
-(def cur-db-type (:oracle db-types)) ; what is the currect db type? 
-(def pg_table-prefix "rp")
-(def ams_table-prefix "AMS")
+(def db-types {:oracle {:type "oracle", :table_prefix "AMS", :schema "JAGDISH"},
+               :postgres {:type "postgres", :table_prefix "rp", :schema "public"},
+               :mysql {:type "mysql", :table_prefix "", :schema ""}})
 
-(def schm "JAGDISH")
+(def cur-db-type (get-in db-types [(keyword db-type) :type])) 
 
 (defn 
   get-db-spec 
@@ -48,9 +51,13 @@
 (defn
   dbs
   []
-  (if (= cur-db-type (:oracle db-types))  
+  (if (= 
+        (get-in db-types [(keyword cur-db-type) :type]) 
+        (get-in db-types [:oracle :type]))  
     (oracle-db-spec)
-    (if (= cur-db-type (:postgres db-types))
+    (if (= 
+          (get-in db-types [(keyword cur-db-type) :type]) 
+          (get-in db-types [:postgres :type]))
       (postgres-db-spec))))
 
 (defn
@@ -165,36 +172,45 @@
           #(list (% :table_name) (% :column_name) (% :type_name))
           (get-columns schm prefix))))
 
-; not required delete
+; Main function to get Table and its columns and Map (table [{clm1} {clm2} ... {clmn}])
+
 (defn
-  get-table-details
-  "Take database spec, return all column names from the database metadata"
+  fetch-table-columns-map
+  "Get Table and columns as map"
   [schm prefix]
-  (filter 
-    #(.startsWith (first %) prefix) 
-    (table-details schm prefix)))
+  (into {}
+        (group-by :table_name (get-columns schm prefix))))
 
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn 
-  test-get-table-details
+  test-fetch-table-columns-map
   []
-  (table-details schm ams_table-prefix))
+  (fetch-table-columns-map 
+    (get-in db-types [(keyword cur-db-type) :schema]) 
+    (get-in db-types [(keyword cur-db-type) :table_prefix])))
 
 (defn
   test-get-relations
   []
-  (get-relationship schm "AMS_ASSET" "AMS_WF_STATE"))
+  (get-relationship 
+    (get-in db-types [(keyword cur-db-type) :schema]) 
+    "AMS_ASSET" 
+    "AMS_WF_STATE"))
 
 (defn
   test-get-table-fk
   []
-  (get-table-fk schm "AMS_ASSET"))
+  (get-table-fk 
+    (get-in db-types [(keyword cur-db-type) :schema]) 
+    "AMS_ASSET"))
 
 (defn
   test-get-table-pk
   []
-  (get-table-pk schm "AMS_ASSET"))
+  (get-table-pk 
+    (get-in db-types [(keyword cur-db-type) :schema]) 
+    "AMS_ASSET"))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 
