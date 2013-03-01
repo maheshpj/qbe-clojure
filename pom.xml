@@ -146,12 +146,13 @@
       <artifactId>ojdbc6</artifactId>
       <version>11.2.0.3</version>
     </dependency>
-    <!-- postgresql -->
+    <!-- postgresql 
     <dependency>
       <groupId>postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <version>9.0-801.jdbc4</version>
     </dependency>
+    -->
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>java.jdbc</artifactId>

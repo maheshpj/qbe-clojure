@@ -16,8 +16,11 @@
 (def p-pwd "postgres")
 
 (def db-types {:oracle "oracle" :mysql "mysql" :postgres "postgres"})
-(def cur-db-type (:postgres db-types)) ; what is the currect db type? 
-(def table-prefix "rp")
+(def cur-db-type (:oracle db-types)) ; what is the currect db type? 
+(def pg_table-prefix "rp")
+(def ams_table-prefix "AMS")
+
+(def schm "JAGDISH")
 
 (defn 
   get-db-spec 
@@ -77,66 +80,121 @@
   (jdbc/with-connection (dbs)
     (jdbc/with-query-results 
       res 
-      ["SELECT * FROM rp_user"]
+      ["SELECT * FROM AMS_WF_PROCESS_DEF"] ;AMS_WF_PROCESS_DEF / rp_user
       (doall res))))
+
+(defn
+  get-oracle-metadata
+  []
+  (jdbc/with-connection (dbs)
+    (jdbc/with-query-results 
+      res 
+      ["select *
+        from all_constraints c
+          inner join all_constraints cc 
+            on c.r_constraint_name = cc.constraint_name
+        where c.table_name like 'AMS%'
+          and c.table_name = 'AMS_ASSET'"] 
+      (doall res))))
+
 
 ;;;;;;;;;;;;;; DATABASE METADATA ;;;;;;;;;;;;;;;;;;;
 
 (defmacro 
   get-sql-metadata
+  "Macro for getting DB Metadata"
   [db method & args] 
   `(jdbc/with-connection 
      ~db 
-     (resultset-seq (-> 
-                      (jdbc/connection)
-                      (.getMetaData) 
-                      (~method ~@args)))))
+     (doall
+           (resultset-seq (-> 
+                            (jdbc/connection)
+                            (.getMetaData) 
+                            (~method ~@args))))))
 
 (defn
   get-tables
   "Get all Tables from database"
-  []
+  [schm prefix]
   (get-sql-metadata 
     (dbs) 
     .getTables 
-    nil nil nil (into-array ["TABLE" "VIEW"])))
+    nil schm (str prefix "%") (into-array ["TABLE"]))) ; "VIEW"
 
 (defn
   get-columns
   "Get all columns from database"
-  []
+  [schm prefix]
   (get-sql-metadata 
     (dbs) 
     .getColumns 
-    nil nil nil nil))
+    nil schm (str prefix "%") nil))
+
+(defn
+  get-relationship
+  "Get columns relationship as PK and FK"
+  [schm parent-table foreign-table]
+  (get-sql-metadata 
+    (dbs) 
+    .getCrossReference
+    nil schm parent-table nil schm foreign-table))
+
+(defn
+  get-table-fk
+  "Get FK column(s) of a table"
+  [schm table]
+  (get-sql-metadata 
+    (dbs) 
+    .getExportedKeys
+    nil schm table))
+
+(defn
+  get-table-pk
+  "Get PK column(s) of a table"
+  [schm table]
+  (get-sql-metadata 
+    (dbs) 
+    .getPrimaryKeys
+    nil schm table))
 
 (defn
   table-details
-  []
+  [schm prefix]
   (into #{}
         (map 
           #(list (% :table_name) (% :column_name) (% :type_name))
-          (get-columns))))
+          (get-columns schm prefix))))
 
+; not required delete
 (defn
   get-table-details
   "Take database spec, return all column names from the database metadata"
-  [prefix]
+  [schm prefix]
   (filter 
     #(.startsWith (first %) prefix) 
-    (table-details)))
+    (table-details schm prefix)))
+
+;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn 
+  test-get-table-details
+  []
+  (table-details schm ams_table-prefix))
 
 (defn
-  gb
+  test-get-relations
   []
-  (filter 
-    #(.startsWith (first %) table-prefix) 
-    (group-by :table_name (get-columns))))
+  (get-relationship schm "AMS_ASSET" "AMS_WF_STATE"))
 
-(def
-  table-set
-  "Set of all tables"
-  (map :table_name (get-tables)))
+(defn
+  test-get-table-fk
+  []
+  (get-table-fk schm "AMS_ASSET"))
+
+(defn
+  test-get-table-pk
+  []
+  (get-table-pk schm "AMS_ASSET"))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 
