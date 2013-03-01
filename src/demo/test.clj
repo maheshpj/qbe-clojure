@@ -1,7 +1,23 @@
-(ns demo.test)
+(ns demo.test
+  (:require [clojure.java.jdbc :as jdbc])
+  (:use [demo.db]))
 
 (def url "jdbc:oracle:thin:jagdish/jagdish@(DESCRIPTION=(ADDRESS = (PROTOCOL = TCP)(HOST =172.21.75.55)(PORT = 1522))(ADDRESS = (PROTOCOL = TCP)(HOST = 172.21.75.55)(PORT = 1522))(LOAD_BALANCE = yes)(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = amsdb)))")
 (def k '(3 (1 g) (4 b)))
+
+(defn
+  get-oracle-metadata
+  []
+  (jdbc/with-connection (dbs)
+    (jdbc/with-query-results
+      res
+      ["select *
+from all_constraints c
+inner join all_constraints cc
+on c.r_constraint_name = cc.constraint_name
+where c.table_name like 'AMS%'
+and c.table_name = 'AMS_ASSET'"]
+      (doall res))))
 
 (defn
   split

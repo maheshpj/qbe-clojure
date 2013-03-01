@@ -5,60 +5,62 @@
 ; valid values : postgres, oracle, mysql
 (def db-type "postgres")
 
-; Oracle
-(def o-driver "oracle.jdbc.driver.OracleDriver")
-(def o-url "jdbc:oracle:thin:jagdish/jagdish@(DESCRIPTION=(ADDRESS = (PROTOCOL = TCP)(HOST =172.21.75.55)(PORT = 1522))(ADDRESS = (PROTOCOL = TCP)(HOST = 172.21.75.55)(PORT = 1522))(LOAD_BALANCE = yes)(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = amsdb)))")
-(def o-subproto "oracle:thin")
-(def o-user "jagdish")
-(def o-pwd "jagdish")
+(def db-types {:oracle {
+                        :type "oracle", 
+                        :table_prefix "AMS", 
+                        :schema "JAGDISH"
+                        :driver "oracle.jdbc.driver.OracleDriver"
+                        :subproto "oracle:thin"
+                        :url "jdbc:oracle:thin:jagdish/jagdish@(DESCRIPTION=(ADDRESS = (PROTOCOL = TCP)(HOST =172.21.75.55)(PORT = 1522))(ADDRESS = (PROTOCOL = TCP)(HOST = 172.21.75.55)(PORT = 1522))(LOAD_BALANCE = yes)(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = amsdb)))"
+                        :user "jagdish"
+                        :pwd "jagdish"},
+               :postgres {
+                          :type "postgres", 
+                          :table_prefix "rp", 
+                          :schema "public"
+                          :driver "org.postgresql.Driver"
+                          :subproto "postgresql"
+                          :url "//localhost:5432/postgres"
+                          :user "postgres"
+                          :pwd "postgres"},
+               :mysql {
+                       :type "mysql", 
+                       :table_prefix "", 
+                       :schema ""
+                       :driver ""
+                       :subproto ""
+                       :url ""
+                       :user ""
+                       :pwd ""}})
 
-; Postgres
-(def p-driver "org.postgresql.Driver")
-(def p-subproto "postgresql")
-(def p-url "//localhost:5432/postgres")
-(def p-user "postgres")
-(def p-pwd "postgres")
-
-(def db-types {:oracle {:type "oracle", :table_prefix "AMS", :schema "JAGDISH"},
-               :postgres {:type "postgres", :table_prefix "rp", :schema "public"},
-               :mysql {:type "mysql", :table_prefix "", :schema ""}})
-
-(def cur-db-type (get-in db-types [(keyword db-type) :type])) 
+(defn
+  db-attr
+  "getting db attribute"
+  [mkey] 
+  (get-in 
+    db-types 
+    [(keyword db-type) mkey]))
 
 (defn 
   get-db-spec 
   "Create database specification map from inputs"
   [driver url proto user pw]
-  (let [url-parts (.split #":" url)]
+  (into {} 
     {:classname driver
      :subprotocol proto
      :subname url
      :user user 
-     :password pw }))
-
-(defn 
-  oracle-db-spec
-  "Get Oracle driver db spec"
-  []
-  (get-db-spec o-driver o-url o-subproto o-user o-pwd))
-
-(defn 
-  postgres-db-spec
-  "Get Postgres driver db spec"
-  []
-  (get-db-spec p-driver p-url p-subproto p-user p-pwd))
+     :password pw}))
 
 (defn
   dbs
   []
-  (if (= 
-        (get-in db-types [(keyword cur-db-type) :type]) 
-        (get-in db-types [:oracle :type]))  
-    (oracle-db-spec)
-    (if (= 
-          (get-in db-types [(keyword cur-db-type) :type]) 
-          (get-in db-types [:postgres :type]))
-      (postgres-db-spec))))
+  (get-db-spec 
+     (db-attr :driver)
+     (db-attr :url) 
+     (db-attr :subproto)
+     (db-attr :user) 
+     (db-attr :pwd)))
 
 (defn
   create-st
@@ -75,10 +77,10 @@
   "insert statement example"
   []
   (jdbc/with-connection (dbs)
-    (jdbc/insert-records :authors
-                     {:first_name "Chas" :last_name "Emerick"}
-                     {:first_name "Christophe" :last_name "Grand"}
-                     {:first_name "Brian" :last_name "Carper"})))
+    (jdbc/insert-records :rp_authors
+                     {:id 2 :first_name "Chas" :last_name "Emerick"}
+                     {:id 3 :first_name "Christophe" :last_name "Grand"}
+                     {:id 4 :first_name "Brian" :last_name "Carper"})))
 
 (defn
   select-st
@@ -88,20 +90,6 @@
     (jdbc/with-query-results 
       res 
       ["SELECT * FROM AMS_WF_PROCESS_DEF"] ;AMS_WF_PROCESS_DEF / rp_user
-      (doall res))))
-
-(defn
-  get-oracle-metadata
-  []
-  (jdbc/with-connection (dbs)
-    (jdbc/with-query-results 
-      res 
-      ["select *
-        from all_constraints c
-          inner join all_constraints cc 
-            on c.r_constraint_name = cc.constraint_name
-        where c.table_name like 'AMS%'
-          and c.table_name = 'AMS_ASSET'"] 
       (doall res))))
 
 
@@ -179,7 +167,9 @@
   "Get Table and columns as map"
   [schm prefix]
   (into {}
-        (group-by :table_name (get-columns schm prefix))))
+        (group-by 
+          :table_name 
+          (get-columns schm prefix))))
 
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -187,14 +177,14 @@
   test-fetch-table-columns-map
   []
   (fetch-table-columns-map 
-    (get-in db-types [(keyword cur-db-type) :schema]) 
-    (get-in db-types [(keyword cur-db-type) :table_prefix])))
+    (db-attr :schema) 
+    (db-attr :table_prefix)))
 
 (defn
   test-get-relations
   []
   (get-relationship 
-    (get-in db-types [(keyword cur-db-type) :schema]) 
+    (db-attr :schema) 
     "AMS_ASSET" 
     "AMS_WF_STATE"))
 
@@ -202,14 +192,14 @@
   test-get-table-fk
   []
   (get-table-fk 
-    (get-in db-types [(keyword cur-db-type) :schema]) 
+    (db-attr :schema) 
     "AMS_ASSET"))
 
 (defn
   test-get-table-pk
   []
   (get-table-pk 
-    (get-in db-types [(keyword cur-db-type) :schema]) 
+    (db-attr :schema) 
     "AMS_ASSET"))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
