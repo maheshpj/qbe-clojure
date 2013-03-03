@@ -104,7 +104,7 @@
     <dependency>
       <groupId>hiccup</groupId>
       <artifactId>hiccup</artifactId>
-      <version>0.3.7</version>
+      <version>1.0.2</version>
       <exclusions>
         <exclusion>
           <groupId>org.clojure</groupId>

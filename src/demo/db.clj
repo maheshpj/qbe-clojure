@@ -174,7 +174,7 @@
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn 
-  test-fetch-table-columns-map
+  fetch-db-table-columns-map
   []
   (fetch-table-columns-map 
     (db-attr :schema) 
@@ -201,6 +201,28 @@
   (get-table-pk 
     (db-attr :schema) 
     "AMS_ASSET"))
+
+(defn
+  testpg-get-relations
+  []
+  (get-relationship 
+    (db-attr :schema) 
+    "rp_user" 
+    "rp_authors"))
+
+(defn
+  testpg-get-table-fk
+  []
+  (get-table-fk 
+    (db-attr :schema) 
+    "rp_authors"))
+
+(defn
+  testpg-get-table-pk
+  []
+  (get-table-pk 
+    (db-attr :schema) 
+    "rp_user"))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 

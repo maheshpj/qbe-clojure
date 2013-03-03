@@ -9,7 +9,7 @@
                  [ring/ring-jetty-adapter "1.0.0-RC1" :exclusions [org.clojure/clojure
                                                                    org.clojure/clojure-contrib]]
                  [compojure "0.6.5" :exclusions [org.clojure/clojure]]
-                 [hiccup "0.3.7" :exclusions [org.clojure/clojure]]
+                 [hiccup "1.0.2" :exclusions [org.clojure/clojure]]
                  [log4j "1.2.16" :exclusions [javax.mail/mail
                                               javax.jms/jms
                                               com.sun.jdmk/jmxtools
