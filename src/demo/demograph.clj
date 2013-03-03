@@ -1,4 +1,5 @@
-(ns demo.demograph)
+(ns demo.demograph
+  (:use [clojure.contrib.graph]))
 
 ; define table weighted directed graph
 (def 
@@ -10,7 +11,40 @@
   dg 
   '((2 1) (3 1 4) (4 5) (6 4) (7 1))) ;{node neighbors) (2 1)
 
+(def empty-graph (struct directed-graph #{} {}))
+
+(def test-graph-1
+  (struct directed-graph
+          #{:1 :2 :3 :4 :5 :6 :7}
+          {:1 #{:3 :8} 
+           :2 #{:1}
+           :3 #{:1 :4}
+           :4 #{:3 :5}
+           :6 #{:4}
+           :7 #{:1}
+           :8 #{:4}}))
+
+(def test-graph-2
+     (struct directed-graph
+             #{:a :b :c :d :e :f :g :h :i :j}
+             {:a #{:b :c}
+              :b #{:a :c}
+              :c #{:d :e}
+              :d #{:a :b}
+              :e #{:d}
+              :f #{:f}
+              :g #{:a :f}
+              :h #{}
+              :i #{:j}
+              :j #{:i}}))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn
+  test-graph-api
+  []
+  (graph/get-neighbors dg 3))
 
 (defn
   if-nil-or-empty

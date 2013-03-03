@@ -76,6 +76,11 @@
       <version>0.2.1</version>
     </dependency>
     <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>clojure-contrib</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+    <dependency>
       <groupId>ring</groupId>
       <artifactId>ring-jetty-adapter</artifactId>
       <version>1.0.0-RC1</version>
