@@ -3,7 +3,7 @@
 
 ; Change following attrbute as per database
 ; valid values : postgres, oracle, mysql
-(def db-type "postgres")
+(def db-type "oracle")
 
 (def db-types {:oracle {
                         :type "oracle", 
@@ -32,6 +32,33 @@
                        :url ""
                        :user ""
                        :pwd ""}})
+
+(def test-query 
+  "SELECT p.reference_id proj_id,
+		  act.name,
+		  prg.name prog,
+		  p.name proj,
+		  ast.asset_id,
+		  ast.asset_type,
+		  smy.trh_ath author
+		FROM ams_asset ast
+		  JOIN ams_pgm_asset_alignment paa
+		    ON paa.asset_id = ast.asset_id
+		  JOIN ams_program p
+		    ON paa.program_ref_id = p.reference_id
+		  JOIN ams_wf_state_smy smy
+		    ON paa.asset_id = smy.asset_id
+		  JOIN ams_account act
+		    ON p.account_id = act.reference_id
+		  JOIN ams_pgm_hchy h
+		    ON paa.program_ref_id = h.subject_id
+		  JOIN ams_program prg
+		    ON prg.reference_id     = h.relation_id
+		WHERE 
+		  smy.activity_code = 'TRH_TRH'
+		  AND ( smy.trh_trh      IS NULL
+		    OR smy.trh_trh         != 'R')
+		  AND prg.parent_id      IS NULL")
 
 (defn
   db-attr
@@ -170,6 +197,15 @@
         (group-by 
           :table_name 
           (get-columns schm prefix))))
+
+(defn
+  execute-query
+  [query-str]
+  (jdbc/with-connection (dbs)
+    (jdbc/with-query-results 
+      res 
+      [query-str]
+      (doall res))))
 
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

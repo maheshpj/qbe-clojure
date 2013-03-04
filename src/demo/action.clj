@@ -4,5 +4,10 @@
 (defn
   content
   []
-  (fetch-db-table-columns-map))
+  (execute-query test-query))
 
+
+(defn
+  content2
+  []
+  (fetch-table-columns-map))
