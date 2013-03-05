@@ -3,7 +3,7 @@
 
 ; Change following attrbute as per database
 ; valid values : postgres, oracle, mysql
-(def db-type "oracle")
+(def db-type "postgres")
 
 (def db-types {:oracle {
                         :type "oracle", 
@@ -33,7 +33,7 @@
                        :user ""
                        :pwd ""}})
 
-(def test-query 
+(def test-oracle-query 
   "SELECT p.reference_id proj_id,
 		  act.name,
 		  prg.name prog,
@@ -59,6 +59,12 @@
 		  AND ( smy.trh_trh      IS NULL
 		    OR smy.trh_trh         != 'R')
 		  AND prg.parent_id      IS NULL")
+
+(def test-pg-query 
+  "SELECT usr.id, ath.first_name, ath.last_name, usr.dept, usr.role 
+   From rp_authors ath
+     JOIN rp_user usr
+       ON ath.user_id = usr.id")
 
 (defn
   db-attr

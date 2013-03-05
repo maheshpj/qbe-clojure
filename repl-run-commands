@@ -1,0 +1,6 @@
+
+Run following commands in REPL
+	(require 'demo)
+	(demo/-main)
+	
+Go to 	http://localhost:8080

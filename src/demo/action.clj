@@ -1,13 +1,22 @@
 (ns demo.action
-  (:use [demo.db]))
+  (:require [demo.db :as db]))
 
 (defn
-  content
+  get-result
   []
-  (execute-query test-query))
-
+  (if (= db/db-type "oracle")
+    (db/execute-query db/test-oracle-query)
+    (db/execute-query db/test-pg-query)))
 
 (defn
-  content2
+  get-schema
   []
-  (fetch-table-columns-map))
+  (db/fetch-db-table-columns-map))
+
+(defn
+  get-header-clms
+  []
+  (if (= db/db-type "oracle")
+    ["Project Id" "Account" "Program" "Project" "Asset ID" "Asset Type" "ATH"]
+    ["UserID" "First Name" "Last Name" "Dept" "Role"]))
+
