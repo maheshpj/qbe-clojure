@@ -4,10 +4,13 @@
 
 (defn
   get-result
-  []
+  [lst]
   (if (= db/db-type "oracle")
     (db/execute-query db/test-oracle-query)
-    (db/execute-query (db/test-generate-query-str))))
+    (db/execute-query 
+      (if (utils/if-nil-or-empty lst)
+        (db/test-generate-query-str)
+        (db/generate-query-str-only-op lst)))))
 
 (defn
   get-schema
@@ -16,8 +19,10 @@
 
 (defn
   get-header-clms
-  []
+  [lst]
   (if (= db/db-type "oracle")
     ["Project Id" "Account" "Program" "Project" "Asset ID" "Asset Type" "ATH"]
-    (map #(st/capitalize (st/replace-first % "rp_" "")) db/poutput)))
+    (if (utils/if-nil-or-empty lst)
+      (map #(st/capitalize (st/replace-first % "rp_" "")) db/poutput)
+      (map #(st/capitalize (st/replace-first % "rp_" "")) lst))))
 

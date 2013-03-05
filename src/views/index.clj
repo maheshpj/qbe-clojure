@@ -1,7 +1,7 @@
 (ns views.index
   (:use [hiccup.page :only (html5)]
         [hiccup.form]
-        [clojure.string :only (upper-case replace-first)])
+        [clojure.string :only (upper-case replace-first capitalize)])
   (:require [demo.action :as action]
             [utils]))
 
@@ -66,15 +66,15 @@
 
 (defn 
   create-result-table
-  []
+  [lst]
   (create-grid 
     "Result"
-    (action/get-header-clms)
-    (action/get-result)))
+    (action/get-header-clms lst)
+    (action/get-result lst)))
 
 (defn
   schema-form
-  []
+  [lst]
   [:div {:id "content"} 
    [:div 
     {:id "schema-form" :style "float: left; width: 25%"} 
@@ -85,4 +85,4 @@
              (submit-button "Run!"))]
    [:div 
     {:id "result" :style "float: left; width: 75%"} 
-    (create-result-table)]])
+    (create-result-table lst)]])

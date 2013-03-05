@@ -267,6 +267,11 @@
   []
   (st/trim (generate-query-str poutput proot ptables pcriteria porderby)))
 
+(defn
+  generate-query-str-only-op
+  [op]
+  (st/trim (generate-query-str op proot ptables pcriteria porderby)))
+
 (defn 
   fetch-db-table-columns-map
   []
