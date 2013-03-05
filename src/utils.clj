@@ -11,3 +11,10 @@
 
 (defn map-tag [tag style-map xs]
   (map (fn [x] [tag style-map x]) xs))
+
+(defn
+  if-nil-or-empty
+  [any]
+  (or 
+    (nil? any) 
+    (empty? any)))

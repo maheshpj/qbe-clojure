@@ -1,5 +1,6 @@
 (ns demo.demograph
-  (:use [clojure.contrib.graph]))
+  (:use [clojure.contrib.graph])
+  (:require [utils]))
 
 ; define table weighted directed graph
 (def 
@@ -44,19 +45,12 @@
 (defn
   test-graph-api
   []
-  (graph/get-neighbors dg 3))
+  (get-neighbors dg 3))
 
-(defn
-  if-nil-or-empty
-  [any]
-  (or 
-    (nil? any) 
-    (empty? any)))
-  
 (defn
   getrest2 
   [restlst simplerestlst]
-  (if (if-nil-or-empty restlst)
+  (if (utils/if-nil-or-empty restlst)
     (reverse simplerestlst)
     (getrest2 
       (rest restlst)
@@ -79,7 +73,7 @@
 (defn
   dg-to-wdg
   [wdg dg]
-  (if (if-nil-or-empty wdg)
+  (if (utils/if-nil-or-empty wdg)
     dg
     (dg-to-wdg 
       (rest wdg)
@@ -96,7 +90,7 @@
 (defn
   our-assoc
   [node net]
-  (if (if-nil-or-empty net) 
+  (if (utils/if-nil-or-empty net) 
     nil
     (let [pair (first net)]
       (if (== node (first pair))
@@ -114,7 +108,7 @@
   bfs
   [end queue net]
   (println "=> Q: " queue)
-  (if (if-nil-or-empty queue) 
+  (if (utils/if-nil-or-empty queue) 
     nil
     (let [path (first queue)]
       (println "=> path: " path)

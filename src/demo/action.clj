@@ -1,12 +1,13 @@
 (ns demo.action
-  (:require [demo.db :as db]))
+  (:require [demo.db :as db]
+            [clojure.string :only (capitalize replace-first) :as st]))
 
 (defn
   get-result
   []
   (if (= db/db-type "oracle")
     (db/execute-query db/test-oracle-query)
-    (db/execute-query db/test-pg-query)))
+    (db/execute-query (db/test-generate-query-str))))
 
 (defn
   get-schema
@@ -18,5 +19,5 @@
   []
   (if (= db/db-type "oracle")
     ["Project Id" "Account" "Program" "Project" "Asset ID" "Asset Type" "ATH"]
-    ["UserID" "First Name" "Last Name" "Dept" "Role"]))
+    (map #(st/capitalize (st/replace-first % "rp_" "")) db/poutput)))
 

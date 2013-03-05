@@ -1,5 +1,7 @@
 (ns demo.db
-  (:require [clojure.java.jdbc :as jdbc]))
+  (:require [clojure.java.jdbc :as jdbc]
+            [utils]
+            [clojure.string :only (trim) :as st]))
 
 ; Change following attrbute as per database
 ; valid values : postgres, oracle, mysql
@@ -32,6 +34,16 @@
                        :url ""
                        :user ""
                        :pwd ""}})
+(def ^:dynamic *SELECT* "SELECT")
+(def ^:dynamic *FROM* "FROM")
+(def ^:dynamic *WHERE* "WHERE")
+(def ^:dynamic *ORDER-BY* "ORDER BY")
+(def ^:dynamic *JOIN* "JOIN")
+(def ^:dynamic *JOIN-ON* "ON")
+(def blank " ")
+(def comma ", ")
+(def -and " and ")
+(def eqto " = ")
 
 (def test-oracle-query 
   "SELECT p.reference_id proj_id,
@@ -63,8 +75,8 @@
 (def test-pg-query 
   "SELECT usr.id, ath.first_name, ath.last_name, usr.dept, usr.role 
    From rp_authors ath
-     JOIN rp_user usr
-       ON ath.user_id = usr.id")
+     LEFT OUTER JOIN rp_user usr
+       ON ath.user_id= usr.id")
 
 (defn
   db-attr
@@ -96,35 +108,65 @@
      (db-attr :pwd)))
 
 (defn
-  create-st
-  "create statement example"
-  []
-  (jdbc/with-connection (dbs)
-    (jdbc/create-table :rp_authors
-                       [:id "integer primary key"]
-                       [:first_name "varchar"]
-                       [:last_name "varchar"])))
+  create-coll
+  [criteria]
+  (map 
+    #(str (name (key %)) eqto (name (val %))) 
+    criteria))
+
+(defmacro
+  cl
+  [clause str coll]
+  `(when-not (utils/if-nil-or-empty ~coll)
+     (str blank ~clause blank
+          (reduce 
+            #(str %1 ~str %2) 
+            ~coll))))
 
 (defn
-  insert-st
-  "insert statement example"
-  []
-  (jdbc/with-connection (dbs)
-    (jdbc/insert-records :rp_authors
-                     {:id 2 :first_name "Chas" :last_name "Emerick"}
-                     {:id 3 :first_name "Christophe" :last_name "Grand"}
-                     {:id 4 :first_name "Brian" :last_name "Carper"})))
+  select-clause
+  [output]
+  (cl *SELECT* comma output))
 
 (defn
-  select-st
-  "select statement example"
-  []
-  (jdbc/with-connection (dbs)
-    (jdbc/with-query-results 
-      res 
-      ["SELECT * FROM AMS_WF_PROCESS_DEF"] ;AMS_WF_PROCESS_DEF / rp_user
-      (doall res))))
+  from-clause
+  [root]
+  (cl *FROM* nil root))
+  
+(defn
+  join-clause
+  [tables]
+  (when-not (utils/if-nil-or-empty tables)
+    (str blank 
+         (for [tbl tables]
+           (str (cl *JOIN* nil (list tbl))
+                (cl *JOIN-ON* nil (list tbl)))))))
 
+(defn
+  join-clause-temp
+  [tables]
+  (when-not (utils/if-nil-or-empty tables)
+    (str blank "LEFT OUTER JOIN rp_user ON rp_authors.user_id= rp_user.id")))
+
+(defn
+  where-clause
+  [criteria]
+  (cl *WHERE* -and (create-coll criteria)))
+
+(defn
+  orderby-clause
+  [orderby]
+  (cl *ORDER-BY* comma orderby))
+
+(defn
+  generate-query-str
+  [output root tables criteria orderby]
+  (str 
+    (select-clause output)
+    (from-clause root)
+    (join-clause-temp tables)
+    (where-clause criteria)
+    (orderby-clause orderby)))
 
 ;;;;;;;;;;;;;; DATABASE METADATA ;;;;;;;;;;;;;;;;;;;
 
@@ -214,6 +256,16 @@
       (doall res))))
 
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def poutput '("rp_user.id" "rp_authors.first_name" "rp_authors.last_name" "rp_user.dept" "rp_user.role"))
+(def proot '("rp_authors"))
+(def ptables '("rp_user"))
+(def pcriteria '())
+(def porderby '("rp_user.id"))
+
+(defn
+  test-generate-query-str
+  []
+  (st/trim (generate-query-str poutput proot ptables pcriteria porderby)))
 
 (defn 
   fetch-db-table-columns-map
