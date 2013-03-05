@@ -50,7 +50,7 @@
   convert-form-string-to-map
   [form-str]
   (reduce 
-    #(assoc % (read-string (nth %2 1)) (nth %2 2)) {} 
+    #(assoc % (keyword (read-string (nth %2 1))) (nth %2 2)) {} 
       #_> (re-seq #"([^=&]+)=([^=&]+)" form-str)))
 
 (defn 
@@ -59,7 +59,8 @@
   (when-not (= nil req)
     (println 
       (convert-form-string-to-map
-        (slurp (req :body))))))
+        (slurp (req :body)))))
+  (index))
 
 
 (defroutes app
