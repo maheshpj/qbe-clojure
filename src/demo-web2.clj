@@ -46,15 +46,21 @@
     [:body
      [:div {:id "content"} (create-DBtable-list)]]))
 
+(defn
+  convert-form-string-to-map
+  [form-str]
+  (reduce 
+    #(assoc % (read-string (nth %2 1)) (nth %2 2)) {} 
+      #_> (re-seq #"([^=&]+)=([^=&]+)" form-str)))
+
 (defn 
   post-req
   [req]
   (when-not (= nil req)
     (println 
-      (into #{} 
-            (clojure.string/split 
-              (slurp (req :body)) 
-              #"&")))))
+      (convert-form-string-to-map
+        (slurp (req :body))))))
+
 
 (defroutes app
   (GET "/" [] (index))
