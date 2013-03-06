@@ -1,7 +1,8 @@
 (ns controller.demo
   (:use [compojure.core :only (defroutes GET POST)]
         [ring.adapter.jetty :only (run-jetty)]
-        [hiccup.page :only (html5)])
+        [hiccup.page :only (html5)]
+        [clojure.string :only (replace-first)])
   (:require [compojure.route :as route]
             [views.index :as idx]
             [utils]
@@ -27,14 +28,16 @@
       req-map)))
 
 (defn
+  remove-db-prefix
+  [kee prefix]
+  (replace-first 
+       (name kee) (str prefix ".") ""))
+(defn
   filter-list-by-prefix
   "Return list of filtered request with prefix"
   [prefix req-map]
   (map 
-    #(clojure.string/replace-first 
-       (name (key %)) 
-       (str prefix ".") 
-       "")
+    #(remove-db-prefix (key %) prefix)
     (filter-req prefix req-map)))
 
 (defn
@@ -44,10 +47,7 @@
   (let [crmap (filter-req prefix req-map)]
     (zipmap 
       (map #(keyword 
-              (clojure.string/replace-first 
-                (name %) 
-                (str prefix ".") 
-                ""))
+              (remove-db-prefix % prefix))
            (keys crmap))
       (vals crmap))))
 
