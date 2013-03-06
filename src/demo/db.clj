@@ -1,11 +1,11 @@
 (ns demo.db
   (:require [clojure.java.jdbc :as jdbc]
             [utils]
-            [clojure.string :only (trim) :as st]))
+            [clojure.string :only (trim upper-case replace) :as st]))
 
 ; Change following attrbute as per database
 ; valid values : postgres, oracle, mysql
-(def db-type "postgres")
+(def db-type "oracle")
 
 (def db-types {:oracle {
                         :type "oracle", 
@@ -45,38 +45,22 @@
 (def -and " and ")
 (def eqto " = ")
 
-(def test-oracle-query 
-  "SELECT p.reference_id proj_id,
-		  act.name,
-		  prg.name prog,
-		  p.name proj,
-		  ast.asset_id,
-		  ast.asset_type,
-		  smy.trh_ath author
-		FROM ams_asset ast
-		  JOIN ams_pgm_asset_alignment paa
-		    ON paa.asset_id = ast.asset_id
-		  JOIN ams_program p
-		    ON paa.program_ref_id = p.reference_id
-		  JOIN ams_wf_state_smy smy
-		    ON paa.asset_id = smy.asset_id
-		  JOIN ams_account act
-		    ON p.account_id = act.reference_id
-		  JOIN ams_pgm_hchy h
-		    ON paa.program_ref_id = h.subject_id
-		  JOIN ams_program prg
-		    ON prg.reference_id     = h.relation_id
-		WHERE 
-		  smy.activity_code = 'TRH_TRH'
-		  AND ( smy.trh_trh      IS NULL
-		    OR smy.trh_trh         != 'R')
-		  AND prg.parent_id      IS NULL")
 
-(def test-pg-query 
-  "SELECT usr.id, ath.first_name, ath.last_name, usr.dept, usr.role 
-   From rp_authors ath
-     LEFT OUTER JOIN rp_user usr
-       ON ath.user_id= usr.id")
+(def p-join "LEFT OUTER JOIN rp_user ON rp_authors.user_id= rp_user.id")
+
+(def o-join 
+  (str "LEFT OUTER JOIN ams_pgm_asset_alignment " 
+       "ON ams_pgm_asset_alignment.asset_id = ams_asset.asset_id "
+       "LEFT OUTER JOIN ams_program ams_program_1 "
+       "ON ams_pgm_asset_alignment.program_ref_id = ams_program_1.reference_id "
+       "LEFT OUTER JOIN ams_wf_state_smy " 
+       "ON ams_pgm_asset_alignment.asset_id = ams_wf_state_smy.asset_id "
+       "LEFT OUTER JOIN ams_account " 
+       "ON ams_program_1.account_id = ams_account.reference_id "
+       "LEFT OUTER JOIN ams_pgm_hchy " 
+       "ON ams_pgm_asset_alignment.program_ref_id = ams_pgm_hchy.subject_id "
+       "LEFT OUTER JOIN ams_program ams_program_2 " 
+       "ON ams_program_2.reference_id     = ams_pgm_hchy.relation_id"))
 
 (defn
   db-attr
@@ -111,7 +95,9 @@
   create-coll
   [criteria]
   (map 
-    #(str (name (key %)) eqto (name (val %))) 
+    #(if (= (val %) "IS NULL")
+       (str (name (key %)) blank (name (val %)))
+       (str (name (key %)) eqto (name (val %)))) 
     criteria))
 
 (defmacro
@@ -124,9 +110,17 @@
             ~coll))))
 
 (defn
+  replace-prog
+  [col]
+  (doall
+    (map 
+      #(st/replace (st/upper-case %) "AMS_PROGRAM" "ams_program_1")
+      col)))
+
+(defn
   select-clause
   [output]
-  (cl *SELECT* comma output))
+  (cl *SELECT* comma (replace-prog output)))
 
 (defn
   from-clause
@@ -146,7 +140,9 @@
   join-clause-temp
   [tables]
   (when-not (utils/if-nil-or-empty tables)
-    (str blank "LEFT OUTER JOIN rp_user ON rp_authors.user_id= rp_user.id")))
+    (if (= db-type "postgres")
+      (str blank p-join)
+      (str blank o-join))))
 
 (defn
   where-clause
@@ -256,11 +252,62 @@
       (doall res))))
 
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def poutput '("rp_user.id" "rp_authors.first_name" "rp_authors.last_name" "rp_user.dept" "rp_user.role"))
+
+(def test-oracle-query 
+  "SELECT ams_program_1.reference_id proj_id,
+		  ams_account.name,
+		  ams_program_2.name prog,
+		  ams_program_1.name proj,
+		  ams_asset.asset_id,
+		  ams_asset.asset_type,
+		  ams_wf_state_smy.trh_ath
+		FROM ams_asset
+		  JOIN ams_pgm_asset_alignment
+		    ON ams_pgm_asset_alignment.asset_id = ams_asset.asset_id
+		  JOIN ams_program ams_program_1
+		    ON ams_pgm_asset_alignment.program_ref_id = ams_program_1.reference_id
+		  JOIN ams_wf_state_smy 
+		    ON ams_pgm_asset_alignment.asset_id = ams_wf_state_smy.asset_id
+		  JOIN ams_account
+		    ON ams_program_1.account_id = ams_account.reference_id
+		  JOIN ams_pgm_hchy
+		    ON ams_pgm_asset_alignment.program_ref_id = ams_pgm_hchy.subject_id
+		  JOIN ams_program ams_program_2
+		    ON ams_program_2.reference_id     = ams_pgm_hchy.relation_id
+		WHERE 
+		  ams_wf_state_smy.activity_code = 'TRH_TRH'
+		  AND ( ams_wf_state_smy.trh_trh      IS NULL
+		    OR ams_wf_state_smy.trh_trh         != 'R')
+		  AND ams_program_2.parent_id      IS NULL")
+
+(def test-pg-query 
+  "SELECT usr.id, ath.first_name, ath.last_name, usr.dept, usr.role 
+   From rp_authors ath
+     LEFT OUTER JOIN rp_user usr
+       ON ath.user_id= usr.id")
+
+(def poutput '("rp_user.id" 
+                "rp_authors.first_name" 
+                "rp_authors.last_name" 
+                "rp_user.dept" 
+                "rp_user.role"))
 (def proot '("rp_authors"))
 (def ptables '("rp_user"))
 (def pcriteria '())
 (def porderby '("rp_user.id"))
+
+(def o-poutput '("ams_program.code" 
+                "ams_account.name" 
+                "ams_program.name" 
+                "ams_program.name" 
+                "ams_asset.asset_id"
+                "ams_asset.asset_type"
+                "ams_wf_state_smy.trh_ath"))
+(def o-proot '("ams_asset"))
+(def o-ptables '("ams_pgm_asset_alignment" "ams_program ams_program_1" "ams_wf_state_smy" "ams_account" "ams_pgm_hchy" "ams_program ams_program_2"))
+(def o-pcriteria {:ams_wf_state_smy.activity_code  "'TRH_TRH'",
+                  :ams_program_2.parent_id "IS NULL"})
+(def o-porderby '("ams_asset.asset_id"))
 
 (defn
   test-generate-query-str
@@ -272,12 +319,24 @@
   [op]
   (st/trim (generate-query-str op proot ptables pcriteria porderby)))
 
+(defn
+  test-o-generate-query-str
+  []
+  (st/trim (generate-query-str o-poutput o-proot o-ptables o-pcriteria o-porderby)))
+
+(defn
+  generate-o-query-str-only-op
+  [op]
+  (st/trim (generate-query-str op o-proot o-ptables nil o-porderby)))
+
 (defn 
   fetch-db-table-columns-map
   []
-  (fetch-table-columns-map 
-    (db-attr :schema) 
-    (db-attr :table_prefix)))
+  (select-keys 
+    (fetch-table-columns-map 
+      (db-attr :schema) 
+      (db-attr :table_prefix))
+    (map #(st/upper-case %) ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])))
 
 (defn
   test-get-relations

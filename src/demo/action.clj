@@ -1,12 +1,15 @@
 (ns demo.action
   (:require [demo.db :as db]
             [clojure.string :only (capitalize replace-first) :as st]))
-
+(def cached-schema nil)
 (defn
   get-result
   [lst]
   (if (= db/db-type "oracle")
-    (db/execute-query db/test-oracle-query)
+    (db/execute-query 
+      (if (utils/if-nil-or-empty lst)
+        (db/test-o-generate-query-str)
+        (db/generate-o-query-str-only-op lst)))
     (db/execute-query 
       (if (utils/if-nil-or-empty lst)
         (db/test-generate-query-str)
@@ -15,14 +18,24 @@
 (defn
   get-schema
   []
-  (db/fetch-db-table-columns-map))
+  (if (nil? cached-schema)
+    (def cached-schema (db/fetch-db-table-columns-map))
+    cached-schema)
+  cached-schema)
+
+(defn
+  create-headers
+  [prefix replaceby coll]
+  (map #(st/capitalize (st/replace-first % prefix replaceby)) coll))
 
 (defn
   get-header-clms
   [lst]
   (if (= db/db-type "oracle")
-    ["Project Id" "Account" "Program" "Project" "Asset ID" "Asset Type" "ATH"]
     (if (utils/if-nil-or-empty lst)
-      (map #(st/capitalize (st/replace-first % "rp_" "")) db/poutput)
-      (map #(st/capitalize (st/replace-first % "rp_" "")) lst))))
+      (create-headers "ams_" "" db/o-poutput)
+      (create-headers "ams_" "" lst))
+    (if (utils/if-nil-or-empty lst)
+      (create-headers "rp_" "" db/poutput)
+      (create-headers "rp_" "" lst))))
 

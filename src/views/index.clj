@@ -9,15 +9,15 @@
   grid
   [clm-names-vec data-map]
   [:table 
-     {:style "border: 1px solid grey; width: 60%"}
+     {:style "border: 1px solid grey; width: 80%"}
      [:tr 
       (utils/map-tag 
         :th 
         {:style "text-align: left; color: blue"} 
-        clm-names-vec)]
+        (map #(replace-first % "." " ") clm-names-vec))]
      [:tr 
       (for [x data-map]
-        [:tr 
+        [:tr x
          (utils/map-tag 
                :td 
                {:style "text-align: left; color: grey; border-top: 1px solid grey;"} 
@@ -31,7 +31,7 @@
      [:li 
       {:style "font-weight: bold"} 
       (upper-case 
-        (replace-first x "rp_" ""))
+        (replace-first x "AMS_" ""))
       (for [y (get map x)]
         [:li 
          (check-box 
@@ -52,9 +52,10 @@
 (defn
   create-list
   [caption map]
-  (list
+  (list    
     [:h1 caption]
-    (bullets map)))
+    [:div {:style "overflow: auto; height: 550px"}
+     (bullets map)]))
 
 
 (defn 
@@ -82,7 +83,7 @@
              (create-schema)
              ;(text-field {:size 3} :x) 
              ;(text-area {:placeholder "shout"} "shout")
-             (submit-button "Run!"))]
+             (submit-button {:style "float: right"} "Run!"))]
    [:div 
-    {:id "result" :style "float: left; width: 75%"} 
+    {:id "result" :style "float: left; width: 70%; margin-left: 15px"} 
     (create-result-table lst)]])

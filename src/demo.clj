@@ -6,7 +6,7 @@
   (:require [controller.demo :as cntr]
             [compojure.route :as route]))
 
-(def host "localhost")
+(def host "172.21.76.154")
 (def port 8080)
 (def context nil)
 
