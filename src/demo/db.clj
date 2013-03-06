@@ -5,7 +5,7 @@
 
 ; Change following attrbute as per database
 ; valid values : postgres, oracle, mysql
-(def db-type "oracle")
+(def db-type "postgres")
 
 (def db-types {:oracle {
                         :type "oracle", 
@@ -44,6 +44,10 @@
 (def comma ", ")
 (def -and " and ")
 (def eqto " = ")
+(def like " LIKE ")
+(def uppercase " UPPER")
+(def isnull " IS NULL ")
+(def null-list (list isnull "NULL" "ISNULL" "NIL" "ISNIL"))
 
 
 (def p-join "LEFT OUTER JOIN rp_user ON rp_authors.user_id= rp_user.id")
@@ -92,12 +96,27 @@
      (db-attr :pwd)))
 
 (defn
+  val-up
+  [vl]
+  (st/upper-case (st/trim vl)))
+
+(defn
+  clm-up
+  [vl]
+  (str uppercase "(" (st/trim vl) ")"))
+
+(defn
+  check-is-null
+  [vl coll]
+  (not-any? #(= (val-up (val vl)) (st/trim %)) coll))
+
+(defn
   create-coll
   [criteria]
   (map 
-    #(if (= (val %) "IS NULL")
-       (str (name (key %)) blank (name (val %)))
-       (str (name (key %)) eqto (name (val %)))) 
+    #(if-not (check-is-null % null-list) 
+       (str (name (key %)) isnull)
+       (str (clm-up (name (key %))) like "'%" (val-up (val %)) "%' ")) 
     criteria))
 
 (defmacro
@@ -332,11 +351,11 @@
 (defn 
   fetch-db-table-columns-map
   []
-  (select-keys 
+  ;(select-keys 
     (fetch-table-columns-map 
       (db-attr :schema) 
-      (db-attr :table_prefix))
-    (map #(st/upper-case %) ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])))
+      (db-attr :table_prefix)))
+    ;(map #(st/upper-case %) ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])))
 
 (defn
   test-get-relations

@@ -24,6 +24,20 @@
                x)])]])
 
 (defn
+  create-id
+  [prefix tab name]
+  (str prefix tab "." (:column_name name)))
+
+(defn
+  dislay-cr-txt
+  [name]
+  (let [display (str "document.getElementById('" name "').style.display=")]
+    (str "if (this.checked) {" 
+         display "'inline';}"
+         "else {"
+         display "'none';}")))
+
+(defn
   bullets
   [map]
   [:ul
@@ -33,16 +47,14 @@
       (upper-case 
         (replace-first x "AMS_" ""))
       (for [y (get map x)]
-        [:li 
-         (check-box 
-           {:id (str "cb_" (:column_name y))} 
-           (str "CLM." x "." (:column_name y))
-           false)
-         (text-field 
-           {:id (str "txt_" (:column_name y))} 
-           (str "TXT." x "." (:column_name y)))
-         [:br]
-         (upper-case (:column_name y))])
+          [:li 
+           (let [clmname (create-id "CLM." x y)
+                 txtname (create-id "TXT." x y)]
+             (check-box {:id clmname :onclick (dislay-cr-txt txtname)} clmname))
+           (upper-case (:column_name y))
+           [:br]
+           (let [txtname (create-id "TXT." x y)]
+             (text-field {:placeholder (str "criteria " (:type_name y)) :id txtname :style "display: none"} txtname))])
       [:br]])])
 
 (defn
@@ -58,7 +70,7 @@
   [caption map]
   (list    
     [:h1 caption]
-    [:div {:style "overflow: auto; height: 550px"}
+    [:div {:style "overflow: auto; height: 520px"}
      (bullets map)]))
 
 
@@ -85,7 +97,9 @@
     {:id "schema-form" :style "float: left; width: 25%"} 
     (form-to {:enctype "application/x-www-form-urlencoded"} [:post "/run"]
              (create-schema)
-             (submit-button {:style "float: right"} "Run!"))]
+             (submit-button 
+               {:style "width: 250px; height: 30px; background-color: lightsteelblue; color: saddlebrown; font: 18px bold;"} 
+               "Run!"))]
    [:div 
     {:id "result" :style "float: left; width: 70%; margin-left: 15px"} 
     (create-result-table op cr)]])
