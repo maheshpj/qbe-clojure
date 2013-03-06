@@ -52,12 +52,6 @@
       (vals crmap))))
 
 (defn
-  get-selected-clms
-  [coll]
-  (reverse 
-    (map name (keys coll))))
-
-(defn
   process-request
   [req-map]
   (index 
