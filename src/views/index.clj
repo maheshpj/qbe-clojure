@@ -36,8 +36,12 @@
         [:li 
          (check-box 
            {:id (str "cb_" (:column_name y))} 
-           (str x "." (:column_name y))
+           (str "CLM." x "." (:column_name y))
            false)
+         (text-field 
+           {:id (str "txt_" (:column_name y))} 
+           (str "TXT." x "." (:column_name y)))
+         [:br]
          (upper-case (:column_name y))])
       [:br]])])
 
@@ -67,23 +71,21 @@
 
 (defn 
   create-result-table
-  [lst]
+  [op cr]
   (create-grid 
     "Result"
-    (action/get-header-clms lst)
-    (action/get-result lst)))
+    (action/get-header-clms op)
+    (action/get-result op cr)))
 
 (defn
   schema-form
-  [lst]
+  [op cr]
   [:div {:id "content"} 
    [:div 
     {:id "schema-form" :style "float: left; width: 25%"} 
     (form-to {:enctype "application/x-www-form-urlencoded"} [:post "/run"]
              (create-schema)
-             ;(text-field {:size 3} :x) 
-             ;(text-area {:placeholder "shout"} "shout")
              (submit-button {:style "float: right"} "Run!"))]
    [:div 
     {:id "result" :style "float: left; width: 70%; margin-left: 15px"} 
-    (create-result-table lst)]])
+    (create-result-table op cr)]])

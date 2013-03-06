@@ -316,8 +316,8 @@
 
 (defn
   generate-query-str-only-op
-  [op]
-  (st/trim (generate-query-str op proot ptables pcriteria porderby)))
+  [op cr]
+  (st/trim (generate-query-str op proot ptables cr porderby)))
 
 (defn
   test-o-generate-query-str
@@ -326,8 +326,8 @@
 
 (defn
   generate-o-query-str-only-op
-  [op]
-  (st/trim (generate-query-str op o-proot o-ptables nil o-porderby)))
+  [op cr]
+  (st/trim (generate-query-str op o-proot o-ptables cr o-porderby)))
 
 (defn 
   fetch-db-table-columns-map

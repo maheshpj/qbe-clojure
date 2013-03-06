@@ -4,16 +4,16 @@
 (def cached-schema nil)
 (defn
   get-result
-  [lst]
+  [op cr]
   (if (= db/db-type "oracle")
     (db/execute-query 
-      (if (utils/if-nil-or-empty lst)
+      (if (utils/if-nil-or-empty op)
         (db/test-o-generate-query-str)
-        (db/generate-o-query-str-only-op lst)))
+        (db/generate-o-query-str-only-op op cr)))
     (db/execute-query 
-      (if (utils/if-nil-or-empty lst)
+      (if (utils/if-nil-or-empty op)
         (db/test-generate-query-str)
-        (db/generate-query-str-only-op lst)))))
+        (db/generate-query-str-only-op op cr)))))
 
 (defn
   get-schema
