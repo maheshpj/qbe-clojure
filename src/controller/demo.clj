@@ -10,14 +10,16 @@
 
 (defn 
   index 
-  [output-list criteria-map]
-  (html5
-    [:head
-     [:meta {:charset "utf-8"}]
-     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge,chrome=1"}]
-     [:meta {:name "viewport" :content "width=device-width, initial-scale=1, maximum-scale=1"}]
-     [:title "AutoQuery Demo"]]
-    [:body (idx/schema-form output-list criteria-map)]))
+  ([] (index '() '()))
+  ([output-list criteria-map]
+    (html5
+      [:head
+       [:meta {:charset "utf-8"}]
+       [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge,chrome=1"}]
+       [:meta {:name "viewport" :content "width=device-width, initial-scale=1, maximum-scale=1"}]
+       [:title "AutoQuery Demo"]]
+      [:body {:style "font-family: Century Gothic; background-color: oldlace;"} 
+       (idx/schema-form output-list criteria-map)])))
 
 (defn
   filter-req
@@ -68,5 +70,5 @@
 
 (defroutes 
   routes
-  (GET "/" [] (index '() '()))
+  (GET "/" [] (index))
   (POST "/run" request (run request)))

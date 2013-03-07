@@ -5,7 +5,7 @@
 
 ; Change following attrbute as per database
 ; valid values : postgres, oracle, mysql
-(def db-type "postgres")
+(def db-type "oracle")
 
 (def db-types {:oracle {
                         :type "oracle", 
@@ -65,6 +65,10 @@
        "ON ams_pgm_asset_alignment.program_ref_id = ams_pgm_hchy.subject_id "
        "LEFT OUTER JOIN ams_program ams_program_2 " 
        "ON ams_program_2.reference_id     = ams_pgm_hchy.relation_id"))
+(defn
+  is-db-type-ora
+  []
+  (= db-type "oracle"))
 
 (defn
   db-attr
@@ -324,38 +328,51 @@
                 "ams_wf_state_smy.trh_ath"))
 (def o-proot '("ams_asset"))
 (def o-ptables '("ams_pgm_asset_alignment" "ams_program ams_program_1" "ams_wf_state_smy" "ams_account" "ams_pgm_hchy" "ams_program ams_program_2"))
-(def o-pcriteria {:ams_wf_state_smy.activity_code  "'TRH_TRH'",
+(def o-pcriteria {:ams_wf_state_smy.activity_code  "TRH_TRH",
                   :ams_program_2.parent_id "IS NULL"})
 (def o-porderby '("ams_asset.asset_id"))
 
 (defn
-  test-generate-query-str
-  []
-  (st/trim (generate-query-str poutput proot ptables pcriteria porderby)))
+  create-query-str-for-pg
+  ([] (generate-query-str-only-op poutput pcriteria))  
+  ([op cr]
+    (let [query
+          (st/trim 
+            (generate-query-str 
+              op 
+              proot 
+              ptables 
+              cr 
+              porderby))]
+      (println query)
+      query)))
 
 (defn
-  generate-query-str-only-op
-  [op cr]
-  (st/trim (generate-query-str op proot ptables cr porderby)))
-
-(defn
-  test-o-generate-query-str
-  []
-  (st/trim (generate-query-str o-poutput o-proot o-ptables o-pcriteria o-porderby)))
-
-(defn
-  generate-o-query-str-only-op
-  [op cr]
-  (st/trim (generate-query-str op o-proot o-ptables cr o-porderby)))
+  create-query-str-for-ora
+  ([] (generate-o-query-str-only-op o-poutput o-pcriteria))
+  ([op cr]
+    (let [query 
+          (st/trim 
+            (generate-query-str 
+              op 
+              o-proot 
+              o-ptables 
+              cr 
+              o-porderby))]
+      (println query)
+      query)))
 
 (defn 
   fetch-db-table-columns-map
   []
-  ;(select-keys 
+  (println "Getting DB Schema...")
+  (select-keys 
     (fetch-table-columns-map 
       (db-attr :schema) 
-      (db-attr :table_prefix)))
-    ;(map #(st/upper-case %) ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])))
+      (db-attr :table_prefix))
+    (map 
+      #(st/upper-case %) 
+      ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])))
 
 (defn
   test-get-relations
