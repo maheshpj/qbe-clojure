@@ -24,10 +24,10 @@
 (defn
   filter-req
   [prefix req-map]
-  (into {}
-    (filter 
-      #(.startsWith (name (key %)) prefix) 
-      req-map)))
+  (zipmap
+    (filter #(.startsWith (name %) prefix) 
+            (keys req-map))
+    (vals req-map)))
 
 (defn
   remove-db-prefix
@@ -38,9 +38,9 @@
   filter-list-by-prefix
   "Return list of filtered request with prefix"
   [prefix req-map]
-  (map 
-    #(remove-db-prefix (key %) prefix)
-    (filter-req prefix req-map)))
+  (let [mp (filter-req prefix req-map)]
+    (map #(remove-db-prefix % prefix)
+         (keys mp))))
 
 (defn
   filter-map-by-prefix
@@ -57,7 +57,7 @@
   process-request
   [req-map]
   (index 
-    (reverse (filter-list-by-prefix "CLM" req-map))
+    (filter-list-by-prefix "CLM" req-map)
     (filter-map-by-prefix "TXT" req-map)))
 
 (defn

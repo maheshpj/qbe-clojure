@@ -7,15 +7,16 @@
 (defn
   get-result
   [op cr]
-  (if (db/is-db-type-ora)
-    (db/execute-query 
-      (if (utils/if-nil-or-empty op)
-        (db/create-query-str-for-ora)
-        (db/create-query-str-for-ora op cr)))
-    (db/execute-query 
-      (if (utils/if-nil-or-empty op)
-        (db/create-query-str-for-pg)
-        (db/create-query-str-for-pg op cr)))))
+  (let [rop (reverse op)]
+    (if (db/is-db-type-ora)
+      (db/execute-query 
+        (if (utils/if-nil-or-empty rop)
+          (db/create-query-str-for-ora)
+          (db/create-query-str-for-ora rop cr)))
+      (db/execute-query 
+        (if (utils/if-nil-or-empty rop)
+          (db/create-query-str-for-pg)
+          (db/create-query-str-for-pg rop cr))))))
 
 (defn
   get-schema
@@ -44,3 +45,8 @@
       (create-headers "RP_" "" db/poutput)
       (create-headers "RP_" "" lst))))
 
+(defn
+  refresh-schema
+  []
+  (when-not (nil? cached-schema)
+    (def cached-schema (db/fetch-db-table-columns-map))))

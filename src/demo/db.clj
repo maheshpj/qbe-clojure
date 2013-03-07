@@ -5,7 +5,7 @@
 
 ; Change following attrbute as per database
 ; valid values : postgres, oracle, mysql
-(def db-type "oracle")
+(def db-type "postgres")
 
 (def db-types {:oracle {
                         :type "oracle", 
@@ -48,7 +48,7 @@
 (def uppercase " UPPER")
 (def isnull " IS NULL ")
 (def null-list (list isnull "NULL" "ISNULL" "NIL" "ISNIL"))
-
+(def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])
 
 (def p-join "LEFT OUTER JOIN rp_user ON rp_authors.user_id= rp_user.id")
 
@@ -82,12 +82,11 @@
   get-db-spec 
   "Create database specification map from inputs"
   [driver url proto user pw]
-  (into {} 
-    {:classname driver
-     :subprotocol proto
-     :subname url
-     :user user 
-     :password pw}))
+  {:classname driver
+   :subprotocol proto
+   :subname url
+   :user user 
+   :password pw})
 
 (defn
   dbs
@@ -117,6 +116,7 @@
 (defn
   create-coll
   [criteria]
+  (println criteria)
   (map 
     #(if-not (check-is-null % null-list) 
        (str (name (key %)) isnull)
@@ -195,11 +195,13 @@
   [db method & args] 
   `(jdbc/with-connection 
      ~db 
-     (doall
-           (resultset-seq (-> 
-                            (jdbc/connection)
-                            (.getMetaData) 
-                            (~method ~@args))))))
+     (jdbc/transaction
+       (doall
+         (resultset-seq (-> 
+                          (jdbc/connection)
+                          (.getMetaData) 
+                          (~method ~@args)))))))
+
 
 (defn
   get-tables
@@ -269,45 +271,13 @@
   execute-query
   [query-str]
   (jdbc/with-connection (dbs)
-    (jdbc/with-query-results 
-      res 
-      [query-str]
-      (doall res))))
+    ;(jdbc/transaction 
+      (jdbc/with-query-results 
+        res 
+        [query-str]
+        (doall res))));)
 
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def test-oracle-query 
-  "SELECT ams_program_1.reference_id proj_id,
-		  ams_account.name,
-		  ams_program_2.name prog,
-		  ams_program_1.name proj,
-		  ams_asset.asset_id,
-		  ams_asset.asset_type,
-		  ams_wf_state_smy.trh_ath
-		FROM ams_asset
-		  JOIN ams_pgm_asset_alignment
-		    ON ams_pgm_asset_alignment.asset_id = ams_asset.asset_id
-		  JOIN ams_program ams_program_1
-		    ON ams_pgm_asset_alignment.program_ref_id = ams_program_1.reference_id
-		  JOIN ams_wf_state_smy 
-		    ON ams_pgm_asset_alignment.asset_id = ams_wf_state_smy.asset_id
-		  JOIN ams_account
-		    ON ams_program_1.account_id = ams_account.reference_id
-		  JOIN ams_pgm_hchy
-		    ON ams_pgm_asset_alignment.program_ref_id = ams_pgm_hchy.subject_id
-		  JOIN ams_program ams_program_2
-		    ON ams_program_2.reference_id     = ams_pgm_hchy.relation_id
-		WHERE 
-		  ams_wf_state_smy.activity_code = 'TRH_TRH'
-		  AND ( ams_wf_state_smy.trh_trh      IS NULL
-		    OR ams_wf_state_smy.trh_trh         != 'R')
-		  AND ams_program_2.parent_id      IS NULL")
-
-(def test-pg-query 
-  "SELECT usr.id, ath.first_name, ath.last_name, usr.dept, usr.role 
-   From rp_authors ath
-     LEFT OUTER JOIN rp_user usr
-       ON ath.user_id= usr.id")
 
 (def poutput '("rp_user.id" 
                 "rp_authors.first_name" 
@@ -334,9 +304,9 @@
 
 (defn
   create-query-str-for-pg
-  ([] (generate-query-str-only-op poutput pcriteria))  
+  ([] (create-query-str-for-pg (reverse poutput) pcriteria))  
   ([op cr]
-    (let [query
+    (let [query 
           (st/trim 
             (generate-query-str 
               op 
@@ -349,7 +319,7 @@
 
 (defn
   create-query-str-for-ora
-  ([] (generate-o-query-str-only-op o-poutput o-pcriteria))
+  ([] (create-query-str-for-ora (reverse o-poutput) o-pcriteria))
   ([op cr]
     (let [query 
           (st/trim 
@@ -366,13 +336,16 @@
   fetch-db-table-columns-map
   []
   (println "Getting DB Schema...")
-  (select-keys 
+  (if (is-db-type-ora)
+    (select-keys 
+      (fetch-table-columns-map 
+        (db-attr :schema) 
+        (db-attr :table_prefix))
+      (map #(st/upper-case %) 
+           proj_selected_tables))
     (fetch-table-columns-map 
       (db-attr :schema) 
-      (db-attr :table_prefix))
-    (map 
-      #(st/upper-case %) 
-      ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])))
+      (db-attr :table_prefix))))
 
 (defn
   test-get-relations

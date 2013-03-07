@@ -54,7 +54,10 @@
            (upper-case (:column_name y))
            [:br]
            (let [txtname (create-id "TXT." x y)]
-             (text-field {:placeholder (str "criteria " (:type_name y)) :id txtname :style "display: none"} txtname))])
+             (text-field {:placeholder (str "criteria " (:type_name y)) 
+                          :id txtname 
+                          :style "display: none"} 
+                         txtname))])
       [:br]])])
 
 (defn

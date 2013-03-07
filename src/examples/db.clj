@@ -90,3 +90,36 @@
       ["SELECT * FROM AMS_WF_PROCESS_DEF"] ;AMS_WF_PROCESS_DEF / rp_user
       (doall res))))
 
+
+(def test-oracle-query 
+  "SELECT ams_program_1.reference_id proj_id,
+		  ams_account.name,
+		  ams_program_2.name prog,
+		  ams_program_1.name proj,
+		  ams_asset.asset_id,
+		  ams_asset.asset_type,
+		  ams_wf_state_smy.trh_ath
+		FROM ams_asset
+		  JOIN ams_pgm_asset_alignment
+		    ON ams_pgm_asset_alignment.asset_id = ams_asset.asset_id
+		  JOIN ams_program ams_program_1
+		    ON ams_pgm_asset_alignment.program_ref_id = ams_program_1.reference_id
+		  JOIN ams_wf_state_smy 
+		    ON ams_pgm_asset_alignment.asset_id = ams_wf_state_smy.asset_id
+		  JOIN ams_account
+		    ON ams_program_1.account_id = ams_account.reference_id
+		  JOIN ams_pgm_hchy
+		    ON ams_pgm_asset_alignment.program_ref_id = ams_pgm_hchy.subject_id
+		  JOIN ams_program ams_program_2
+		    ON ams_program_2.reference_id     = ams_pgm_hchy.relation_id
+		WHERE 
+		  ams_wf_state_smy.activity_code = 'TRH_TRH'
+		  AND ( ams_wf_state_smy.trh_trh      IS NULL
+		    OR ams_wf_state_smy.trh_trh         != 'R')
+		  AND ams_program_2.parent_id      IS NULL")
+
+(def test-pg-query 
+  "SELECT usr.id, ath.first_name, ath.last_name, usr.dept, usr.role 
+   From rp_authors ath
+     LEFT OUTER JOIN rp_user usr
+       ON ath.user_id= usr.id")
