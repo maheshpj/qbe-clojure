@@ -1,17 +1,18 @@
 (ns controller.demo
-  (:use [compojure.core :only (defroutes GET POST)]
+  (:use [compojure.core :only (defroutes GET POST PUT)]
         [ring.adapter.jetty :only (run-jetty)]
-        [hiccup.page :only (html5)]
-        [clojure.string :only (replace-first)])
+        [hiccup.page :only (html5 include-css)])
   (:require [compojure.route :as route]
+            [compojure.handler :as handler]
+            [ring.util.response :as ring]
             [views.index :as idx]
-            [utils]
-            [ring.util.response :as ring]))
+            [utils]))
 
 (defn 
-  index 
-  ([] (index '() '()))
-  ([output-list criteria-map]
+  index
+  ([] (index '()))
+  ([req-map]
+    (println req-map)
     (html5
       [:head
        [:meta {:charset "utf-8"}]
@@ -19,54 +20,17 @@
        [:meta {:name "viewport" :content "width=device-width, initial-scale=1, maximum-scale=1"}]
        [:title "AutoQuery Demo"]]
       [:body {:style "font-family: Century Gothic; background-color: oldlace;"} 
-       (idx/schema-form output-list criteria-map)])))
-
-(defn
-  filter-req
-  [prefix req-map]
-  (zipmap
-    (filter #(.startsWith (name %) prefix) 
-            (keys req-map))
-    (vals req-map)))
-
-(defn
-  remove-db-prefix
-  [kee prefix]
-  (replace-first 
-       (name kee) (str prefix ".") ""))
-(defn
-  filter-list-by-prefix
-  "Return list of filtered request with prefix"
-  [prefix req-map]
-  (let [mp (filter-req prefix req-map)]
-    (map #(remove-db-prefix % prefix)
-         (keys mp))))
-
-(defn
-  filter-map-by-prefix
-  "Return map of filtered request with prefix"
-  [prefix req-map]
-  (let [crmap (filter-req prefix req-map)]
-    (zipmap 
-      (map #(keyword 
-              (remove-db-prefix % prefix))
-           (keys crmap))
-      (vals crmap))))
-
-(defn
-  process-request
-  [req-map]
-  (index 
-    (filter-list-by-prefix "CLM" req-map)
-    (filter-map-by-prefix "TXT" req-map)))
+       (idx/schema-form req-map)])))
 
 (defn
   run
   [req]
-  (when-not (utils/if-nil-or-empty req)
-    (process-request 
+  ;(println req)
+  (if-not (utils/if-nil-or-empty req)
+    (index 
       (utils/convert-form-string-to-map
-        (slurp (req :body))))))
+        (slurp (req :body))))
+    (ring/redirect "/")))
 
 (defroutes 
   routes

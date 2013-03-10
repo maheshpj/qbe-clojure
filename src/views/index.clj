@@ -1,6 +1,7 @@
 (ns views.index
   (:use [hiccup.page :only (html5)]
         [hiccup.form]
+        [hiccup.element]
         [clojure.string :only (upper-case replace-first capitalize)])
   (:require [demo.action :as action]
             [utils]))
@@ -10,88 +11,119 @@
   [clm-names-vec data-map]
   [:table 
      {:style "border: 1px solid grey; width: 100%"}
+     [:thead
      [:tr 
       (utils/map-tag 
         :th 
         {:style "text-align: left; color: dimgray"} 
-        (map #(replace-first % "." " ") clm-names-vec))]
+        (map #(replace-first % "." " ") clm-names-vec))]]
+     [:tbody
      [:tr {:style "background: -moz-linear-gradient(top, #ffffff, #dddddd);"}
       (for [x data-map]
-        [:tr x
+        [:tr  x
          (utils/map-tag 
-               :td 
-               {:style "text-align: left; color: grey; border-top: 0px solid grey; background: -moz-linear-gradient(top, #fdfdfd, #e5e5e5);"} 
-               x)])]])
+           :td 
+           {:style "text-align: left; color: grey; border-top: 0px solid grey; background: -moz-linear-gradient(top, #fdfdfd, #e5e5e5);"} 
+           x)])]]])
 
 (defn
   create-id
   [prefix tab name]
-  (str prefix tab "." (:column_name name)))
+  (str prefix "." tab "." (:column_name name)))
 
 (defn
   dislay-cr-txt
-  [name]
-  (let [display (str "document.getElementById('" name "').style.display=")]
-    (str "if (this.checked) {" 
+  [clmnm name]
+  (let [display (str "document.getElementById('" name "').style.display=")
+        clm (str "document.getElementById('" clmnm "').checked")]
+    (str "if ("clm") {" 
          display "'inline';}"
          "else {"
          display "'none';}")))
 
 (defn
+  show-div
+  [x y req-map]
+  (if ((keyword (create-id "CLM" x y)) req-map) 
+    "inline" 
+    "none"))
+
+(defn
   bullets
-  [map]
+  [req-map map]
   [:ul
    (for [x (keys map)]
      [:li 
       {:style "font-weight: bold; color: dimgray"} 
       (upper-case 
-        (replace-first x "AMS_" ""))
+        (replace-first x "rp_" ""))
       (for [y (get map x)]
           [:li {:style "color: #616161; font-family: Century Gothic;"}
-           (let [clmname (create-id "CLM." x y)
-                 txtname (create-id "TXT." x y)]
-             (check-box {:id clmname :onclick (dislay-cr-txt txtname)} clmname))
+           (let [clmname (create-id "CLM" x y)
+                 txtname (create-id "TXT" x y)]
+             (check-box {:id clmname 
+                         :onclick (dislay-cr-txt
+                                    clmname
+                                    (create-id "DIV" x y))} 
+                        clmname
+                        ((keyword clmname) req-map)))
            (upper-case (:column_name y))
            [:br]
-           (let [txtname (create-id "TXT." x y)]
-             (text-field {:placeholder (str "criteria " (:type_name y)) 
-                          :id txtname 
-                          :style "display: none"} 
-                         txtname))])
+           [:div {:id (create-id "DIV" x y)  
+                  :style (str "display:" (show-div x y req-map))}
+            (let [txtname (create-id "TXT" x y)]
+              (text-field {:placeholder (str "criteria " (:type_name y)) 
+                           :id txtname} 
+                          txtname
+                          ((keyword txtname) req-map)))
+            (let [ordname (create-id "ORD" x y)]
+              (check-box {:id ordname} 
+                         ordname 
+                         ((keyword ordname) req-map))) "^"]])
       [:br]])])
 
 (defn
   create-grid
   [caption clm-names-vec data-map]
   (list
-    [:h1 caption]
+    [:h2 caption]
     [:div {:style "overflow-y: auto; height:530px; border: 1px solid lightgrey"}
      (grid clm-names-vec data-map)]))
 
 
 (defn
   create-list
-  [caption map]
+  [req-map caption map]
   (list    
-    [:h1 caption]
-    [:div {:style "overflow: auto; height: 530px; border: 1px solid lightgrey; background-color: papayawhip;"}
-     (bullets map)]))
+    [:h2 caption]
+    [:div {:style "width: 100%; margin-bottom: 4px"} 
+     "Root:  "
+     (let [options (map 
+                     #(upper-case (replace-first  % "rp_" "")) 
+                     (keys map))]
+       (drop-down {:id "RT"} 
+                  "RT" 
+                  (cons nil options) 
+                  (:RT req-map)))]
+    [:div {:style "overflow: auto; height: 500px; border: 1px solid lightgrey; background-color: papayawhip;"}
+     (bullets req-map map)]))
 
 
 (defn 
   create-schema
-  []
+  [req-map]
   (create-list
+    req-map
     "Schema"
     (action/get-schema)))
 
 (defn 
   create-result-table
-  [op cr]
+  [req-map]
   (create-grid 
     "Result"
-    (action/get-header-clms op)
-    (let [result (action/get-result op cr)]
+    (reverse (action/get-header-clms))
+    (let [result (action/get-result)]
       (println result)
       result)))
 
@@ -99,19 +131,31 @@
   create-run-btn
   []
   (submit-button 
-    {:style "float: right; width: 284px; height: 30px; background-color: darkkhaki; margin-top: 5px; color: saddlebrown; font: 18px bold;"} 
+    {:style "float: right; width: 254px; border: 1px solid white; height: 30px; background-color: darkkhaki; margin-top: 5px; color: saddlebrown; font: 18px bold;"} 
     "Run!"))
 
 (defn
+  create-reset-btn
+  []
+  [:div {:style "float: left; background-color: lightgrey; margin-top: 7px; width: 55px; text-align: center; height: 25px; vertical-align: middle; line-height: 20pt; border: 1px solid grey"}
+   (link-to "/" "Reset")])
+
+(defn
   schema-form
-  [op cr]
+  [req-map]
   [:div {:id "content"} 
    [:div 
     {:id "schema-form" :style "float: left; width: 25%"} 
     (form-to 
       {:enctype "application/x-www-form-urlencoded"} [:post "/run"]
-      (create-schema)             
+      (create-schema req-map) 
+      (create-reset-btn)
       (create-run-btn))]
-   [:div 
-    {:id "result" :style "float: left; width: 70%; margin-left: 15px"} 
-    (create-result-table op cr)]])
+   ;(println req-map)
+   (when-not (utils/if-nil-or-empty req-map)
+     (action/create-query-seqs req-map)
+     [:div 
+      {:id "result" :style "float: left; width: 70%; margin-left: 15px"} 
+      (if (utils/if-nil-or-empty action/rt)
+        (label {:style "color: red; font-size: 13pt"} "errMsg" "Please select a Root")
+        (create-result-table req-map))])])

@@ -1,39 +1,10 @@
 (ns demo.db
+  (:use [demo.db-config])
   (:require [clojure.java.jdbc :as jdbc]
             [utils]
             [clojure.string :only (trim upper-case replace) :as st]))
 
-; Change following attrbute as per database
-; valid values : postgres, oracle, mysql
-(def db-type "postgres")
-
-(def db-types {:oracle {
-                        :type "oracle", 
-                        :table_prefix "AMS", 
-                        :schema "JAGDISH"
-                        :driver "oracle.jdbc.driver.OracleDriver"
-                        :subproto "oracle:thin"
-                        :url "jdbc:oracle:thin:jagdish/jagdish@(DESCRIPTION=(ADDRESS = (PROTOCOL = TCP)(HOST =172.21.75.55)(PORT = 1522))(ADDRESS = (PROTOCOL = TCP)(HOST = 172.21.75.55)(PORT = 1522))(LOAD_BALANCE = yes)(CONNECT_DATA =(SERVER = DEDICATED)(SERVICE_NAME = amsdb)))"
-                        :user "jagdish"
-                        :pwd "jagdish"},
-               :postgres {
-                          :type "postgres", 
-                          :table_prefix "rp", 
-                          :schema "public"
-                          :driver "org.postgresql.Driver"
-                          :subproto "postgresql"
-                          :url "//localhost:5432/postgres"
-                          :user "postgres"
-                          :pwd "postgres"},
-               :mysql {
-                       :type "mysql", 
-                       :table_prefix "", 
-                       :schema ""
-                       :driver ""
-                       :subproto ""
-                       :url ""
-                       :user ""
-                       :pwd ""}})
+(def cached-schema nil)
 (def ^:dynamic *SELECT* "SELECT")
 (def ^:dynamic *FROM* "FROM")
 (def ^:dynamic *WHERE* "WHERE")
@@ -48,6 +19,7 @@
 (def uppercase " UPPER")
 (def isnull " IS NULL ")
 (def null-list (list isnull "NULL" "ISNULL" "NIL" "ISNIL"))
+(def number-clm-types (list "numeric" "int" "int4" "number" "integer" "bigint" "smallint"))
 (def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])
 
 (def p-join "LEFT OUTER JOIN rp_user ON rp_authors.user_id= rp_user.id")
@@ -65,6 +37,7 @@
        "ON ams_pgm_asset_alignment.program_ref_id = ams_pgm_hchy.subject_id "
        "LEFT OUTER JOIN ams_program ams_program_2 " 
        "ON ams_program_2.reference_id     = ams_pgm_hchy.relation_id"))
+
 (defn
   is-db-type-ora
   []
@@ -114,13 +87,31 @@
   (not-any? #(= (val-up (val vl)) (st/trim %)) coll))
 
 (defn
+  get-clm-type-name
+  [t-c]
+  (:type_name 
+    (first 
+      (filter (fn [mp] (= (mp :column_name) (second t-c))) 
+              (-> (first t-c) cached-schema)))) )
+
+(defn
+  cr-alpha-numeric
+  [i]
+  (let [keystr (name (key i))
+        t-c  (st/split keystr #"\.")
+        typename (get-clm-type-name t-c)]
+    (if (not-any? (fn [i] (= i typename)) number-clm-types)
+      (str (clm-up keystr) like "'%" (val-up (val i)) "%' ")
+      (str keystr " = " (val i)))))
+
+(defn
   create-coll
   [criteria]
   (println criteria)
   (map 
-    #(if-not (check-is-null % null-list) 
-       (str (name (key %)) isnull)
-       (str (clm-up (name (key %))) like "'%" (val-up (val %)) "%' ")) 
+    (fn [i] (if-not (check-is-null i null-list) 
+       (str (name (key i)) isnull)
+       (cr-alpha-numeric i))) 
     criteria))
 
 (defmacro
@@ -132,6 +123,7 @@
             #(str %1 ~str %2) 
             ~coll))))
 
+;;;;;; need to remove 
 (defn
   replace-prog
   [col]
@@ -271,11 +263,33 @@
   execute-query
   [query-str]
   (jdbc/with-connection (dbs)
-    ;(jdbc/transaction 
+    (jdbc/transaction 
       (jdbc/with-query-results 
         res 
         [query-str]
-        (doall res))));)
+        (doall res)))))
+
+(defn
+  fetch-schema-from-db
+  []
+  (println "Getting DB Schema...")
+  (if (is-db-type-ora)
+      (select-keys 
+        (fetch-table-columns-map 
+          (db-attr :schema) 
+          (db-attr :table_prefix))
+        (map #(st/upper-case %) 
+             proj_selected_tables))
+      (fetch-table-columns-map 
+        (db-attr :schema) 
+        (db-attr :table_prefix))))
+
+(defn 
+  fetch-db-table-columns-map
+  []
+  (when (nil? cached-schema)
+    (def cached-schema (fetch-schema-from-db))) 
+  cached-schema)
 
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -304,48 +318,31 @@
 
 (defn
   create-query-str-for-pg
-  ([] (create-query-str-for-pg (reverse poutput) pcriteria))  
-  ([op cr]
-    (let [query 
-          (st/trim 
-            (generate-query-str 
-              op 
-              proot 
-              ptables 
-              cr 
-              porderby))]
-      (println query)
-      query)))
+  [op cr rt ord]
+  (let [query 
+        (st/trim 
+          (generate-query-str 
+            op 
+            rt 
+            ptables 
+            cr 
+            ord))]
+    (println query)
+    query))
 
 (defn
   create-query-str-for-ora
-  ([] (create-query-str-for-ora (reverse o-poutput) o-pcriteria))
-  ([op cr]
-    (let [query 
-          (st/trim 
-            (generate-query-str 
-              op 
-              o-proot 
-              o-ptables 
-              cr 
-              o-porderby))]
-      (println query)
-      query)))
-
-(defn 
-  fetch-db-table-columns-map
-  []
-  (println "Getting DB Schema...")
-  (if (is-db-type-ora)
-    (select-keys 
-      (fetch-table-columns-map 
-        (db-attr :schema) 
-        (db-attr :table_prefix))
-      (map #(st/upper-case %) 
-           proj_selected_tables))
-    (fetch-table-columns-map 
-      (db-attr :schema) 
-      (db-attr :table_prefix))))
+  [op cr rt ord]
+  (let [query 
+        (st/trim 
+          (generate-query-str 
+            op 
+            rt 
+            o-ptables 
+            cr 
+            ord))]
+    (println query)
+    query))
 
 (defn
   test-get-relations
@@ -392,6 +389,12 @@
     "rp_user"))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
+
+(defn
+  refresh-schema
+  []
+  (when-not (nil? cached-schema)
+    (def cached-schema (fetch-db-table-columns-map))))
 
 (defn
   sanity-check

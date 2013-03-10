@@ -2,29 +2,65 @@
   (:require [demo.db :as db]
             [clojure.string :only (capitalize replace-first upper-case) :as st]))
 
-(def cached-schema nil)
+(def op)
+(def cr)
+(def rt)
+(def ord)
+
+(defn
+  filter-req
+  [prefix req-map]
+  (into {}
+        (filter #(.startsWith (name (key %)) prefix) 
+                req-map)))
+
+(defn
+  remove-db-prefix
+  [kee prefix]
+  (st/replace-first 
+       (name kee) (str prefix ".") ""))
+(defn
+  filter-list-by-prefix
+  "Return list of filtered request with prefix"
+  [prefix req-map]
+  (let [mp (filter-req prefix req-map)]
+    (map #(remove-db-prefix % prefix)
+         (keys mp))))
+
+(defn
+  filter-map-by-prefix
+  "Return map of filtered request with prefix"
+  [prefix req-map]
+  (let [crmap (filter-req prefix req-map)]
+    (println "crmap is " crmap)
+    (zipmap 
+      (map #(keyword 
+              (remove-db-prefix % prefix))
+           (keys crmap))
+      (vals crmap))))
+
+(defn
+  create-query-seqs
+  [req-map]
+  (def op (filter-list-by-prefix "CLM" req-map))
+  (def cr (filter-map-by-prefix "TXT" req-map))
+  (def ord (filter-list-by-prefix "ORD" req-map))
+  (def rt (:RT req-map)))
 
 (defn
   get-result
-  [op cr]
-  (let [rop (reverse op)]
+  []
+  (when-not (utils/if-nil-or-empty op)
     (if (db/is-db-type-ora)
       (db/execute-query 
-        (if (utils/if-nil-or-empty rop)
-          (db/create-query-str-for-ora)
-          (db/create-query-str-for-ora rop cr)))
+        (db/create-query-str-for-ora op cr rt ord))
       (db/execute-query 
-        (if (utils/if-nil-or-empty rop)
-          (db/create-query-str-for-pg)
-          (db/create-query-str-for-pg rop cr))))))
+        (db/create-query-str-for-pg op cr rt ord)))))
 
 (defn
   get-schema
   []
-  (if (nil? cached-schema)
-    (def cached-schema (db/fetch-db-table-columns-map))
-    cached-schema)
-  cached-schema)
+  (db/fetch-db-table-columns-map))
 
 (defn
   create-headers
@@ -36,17 +72,7 @@
 
 (defn
   get-header-clms
-  [lst]
-  (if (db/is-db-type-ora)
-    (if (utils/if-nil-or-empty lst)
-      (create-headers "AMS_" "" db/o-poutput)
-      (create-headers "AMS_" "" lst))
-    (if (utils/if-nil-or-empty lst)
-      (create-headers "RP_" "" db/poutput)
-      (create-headers "RP_" "" lst))))
-
-(defn
-  refresh-schema
   []
-  (when-not (nil? cached-schema)
-    (def cached-schema (db/fetch-db-table-columns-map))))
+  (if (db/is-db-type-ora)
+    (create-headers "AMS_" "" op)
+    (create-headers "RP_" "" op)))
