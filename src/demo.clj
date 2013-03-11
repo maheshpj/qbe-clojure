@@ -7,7 +7,7 @@
             [compojure.route :as route]))
 
 (def host "localhost") ;"172.21.76.154"
-(def port 8081)
+(def port 8080)
 (def context nil)
 
 (defroutes routes

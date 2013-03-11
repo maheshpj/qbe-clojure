@@ -39,7 +39,6 @@
   "Return map of filtered request with prefix"
   [prefix req-map]
   (let [crmap (filter-req prefix req-map)]
-    (println "crmap is " crmap)
     (zipmap 
       (map #(keyword 
               (remove-db-prefix % prefix))
@@ -53,7 +52,7 @@
   (def cr (filter-map-by-prefix "TXT" req-map))
   (def ord (filter-list-by-prefix "ORD" req-map))
   (def rt (:RT req-map))
-  (def sel-tables (selected-tables (keys op)))
+  (def sel-tables (selected-tables op))
   (println sel-tables))
 
 (defn
@@ -69,7 +68,11 @@
 (defn
   get-schema
   []
-  (db/fetch-db-table-columns-map))
+  (db/fetch-db-table-columns-map)
+  (println "schema fetched successfuly!")
+  (db/create-pk-ralation db/cached-schema)
+  (println "PK relations created successfuly!")
+  db/cached-schema)
 
 (defn
   create-headers

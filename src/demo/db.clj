@@ -5,6 +5,7 @@
             [clojure.string :only (trim upper-case replace) :as st]))
 
 (def cached-schema nil)
+(def table-pk {})
 (def ^:dynamic *SELECT* "SELECT")
 (def ^:dynamic *FROM* "FROM")
 (def ^:dynamic *WHERE* "WHERE")
@@ -248,6 +249,12 @@
           #(list (% :table_name) (% :column_name) (% :type_name))
           (get-columns schm prefix))))
 
+(defn
+  table-pk-map
+  [schm tbl]
+  (let [mp (first (get-table-pk schm tbl))]
+    (hash-map (keyword (:table_name mp)) (:column_name mp))))
+
 ; Main function to get Table and its columns and Map (table [{clm1} {clm2} ... {clmn}])
 
 (defn
@@ -290,6 +297,13 @@
   (when (nil? cached-schema)
     (def cached-schema (fetch-schema-from-db))) 
   cached-schema)
+
+(defn
+  create-pk-ralation
+  "Creats a map of table : PK ralation"
+  [schm]
+  (apply merge 
+         (map (fn [i] (table-pk-map (db-attr :schema) i)) (keys schm))))
 
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -393,8 +407,8 @@
 (defn
   refresh-schema
   []
-  (when-not (nil? cached-schema)
-    (def cached-schema (fetch-db-table-columns-map))))
+  (when (nil? cached-schema)
+    (def cached-schema (fetch-schema-from-db))))
 
 (defn
   sanity-check
