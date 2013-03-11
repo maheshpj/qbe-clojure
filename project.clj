@@ -19,5 +19,6 @@
                  [org.clojure/java.jdbc "0.2.3"]
                  [org.clojure/java.jdbc.sql "0.2.3"]
                  [com.oracle/ojdbc6 "11.2.0.3"]
-                 [postgresql "9.0-801.jdbc4"]]
+                 [postgresql "9.0-801.jdbc4"]
+                 [jkkramer/loom "0.2.0"]]
   :repositories {"codelds" "https://code.lds.org/nexus/content/groups/main-repo"})

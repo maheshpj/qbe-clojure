@@ -131,7 +131,7 @@
   create-run-btn
   []
   (submit-button 
-    {:style "float: right; width: 254px; border: 1px solid white; height: 30px; background-color: darkkhaki; margin-top: 5px; color: saddlebrown; font: 18px bold;"} 
+    {:style "float: right; width: 150px; border: 1px solid white; height: 30px; background-color: darkkhaki; margin-top: 5px; color: saddlebrown; font: 18px bold;"} 
     "Run!"))
 
 (defn

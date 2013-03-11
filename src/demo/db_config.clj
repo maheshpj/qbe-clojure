@@ -2,7 +2,7 @@
 
 ; Change following attrbute as per database
 ; valid values : postgres, oracle, mysql
-(def db-type "postgres")
+(def db-type "oracle")
 
 (def db-types {:oracle {
                         :type "oracle", 

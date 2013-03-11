@@ -162,6 +162,11 @@
       <artifactId>java.jdbc</artifactId>
       <version>0.2.3</version>
     </dependency>
+    <dependency>
+      <groupId>jkkramer</groupId>
+      <artifactId>loom</artifactId>
+      <version>0.2.0</version>
+    </dependency>
   </dependencies>
 </project>
 
