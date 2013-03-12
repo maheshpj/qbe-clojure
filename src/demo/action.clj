@@ -4,9 +4,9 @@
 
 (def op)
 (def cr)
-(def rt)
+(def rt "ast")
 (def ord)
-(def sel-tables)
+(def sel-tables #{"ast" "st" "prg" "act"})
 
 (defn 
   selected-tables

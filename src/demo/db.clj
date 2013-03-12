@@ -393,7 +393,7 @@
   []
   (get-table-fk 
     (db-attr :schema) 
-    "rp_authors"))
+    "rp_user"))
 
 (defn
   testpg-get-table-pk
