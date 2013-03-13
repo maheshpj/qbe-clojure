@@ -4,9 +4,11 @@
 
 (def op)
 (def cr)
-(def rt "ast")
+(def rt)
+;(def rt "ast")
 (def ord)
-(def sel-tables #{"ast" "st" "prg" "act"})
+(def sel-tables)
+;(def sel-tables #{"ast" "st" "prg" "act"})
 
 (defn 
   selected-tables
@@ -69,9 +71,8 @@
   get-schema
   []
   (db/fetch-db-table-columns-map)
-  (println "schema fetched successfuly!")
-  (db/create-pk-ralation db/cached-schema)
-  (println "PK relations created successfuly!")
+  ;(println "schema fetched successfuly!")
+  (db/get-pk-ralation db/cached-schema)
   db/cached-schema)
 
 (defn

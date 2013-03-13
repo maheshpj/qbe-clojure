@@ -49,38 +49,70 @@
     "none"))
 
 (defn
+  option-criteria
+  [x y req-map]
+  (let [txtname (create-id "TXT" x y)]
+    (text-field {:placeholder (str "criteria " (:type_name y)) 
+                 :id txtname
+                 :style "margin:5px 5px 5px 20px"} 
+                txtname
+                ((keyword txtname) req-map))))
+
+(defn
+  option-ord-by
+  [x y req-map]
+  (let [ordname (create-id "ORD" x y)]
+    (check-box {:id ordname} 
+               ordname 
+               ((keyword ordname) req-map))))
+
+(defn
+  clm-options
+  [x y req-map]
+  [:div {:id (create-id "DIV" x y)  
+         :style (str "display:" (show-div x y req-map))}
+   (option-criteria x y req-map)
+   (option-ord-by x y req-map) "^"])
+
+(defn
+  clm-checkbox
+  [x y req-map]
+  (let [clmname (create-id "CLM" x y)
+        txtname (create-id "TXT" x y)]
+    (check-box {:id clmname 
+                :onclick (dislay-cr-txt clmname (create-id "DIV" x y))} 
+               clmname
+               ((keyword clmname) req-map))))
+
+(defn
+  tbli-disp
+  [id]
+  (str "document.getElementById('" id  "').style.display"))
+
+(defn
+  li-toggle
+  [id]
+  (str "if (" (tbli-disp id) " == 'inline') "
+       "{" (tbli-disp id) " = 'none';} "
+       "else {" (tbli-disp id) " = 'inline';}"))
+
+(defn
   bullets
+  "Create left side panel of Table - column tree"
   [req-map map]
   [:ul
    (for [x (keys map)]
-     [:li 
-      {:style "font-weight: bold; color: dimgray"} 
-      (upper-case 
-        (replace-first x "rp_" ""))
-      (for [y (get map x)]
-          [:li {:style "color: #616161; font-family: Century Gothic;"}
-           (let [clmname (create-id "CLM" x y)
-                 txtname (create-id "TXT" x y)]
-             (check-box {:id clmname 
-                         :onclick (dislay-cr-txt
-                                    clmname
-                                    (create-id "DIV" x y))} 
-                        clmname
-                        ((keyword clmname) req-map)))
-           (upper-case (:column_name y))
-           [:br]
-           [:div {:id (create-id "DIV" x y)  
-                  :style (str "display:" (show-div x y req-map))}
-            (let [txtname (create-id "TXT" x y)]
-              (text-field {:placeholder (str "criteria " (:type_name y)) 
-                           :id txtname} 
-                          txtname
-                          ((keyword txtname) req-map)))
-            (let [ordname (create-id "ORD" x y)]
-              (check-box {:id ordname} 
-                         ordname 
-                         ((keyword ordname) req-map))) "^"]])
-      [:br]])])
+     [:li {:style "font-weight: bold; color: dimgray; list-style: square;"
+           :onclick (li-toggle (str "ul_" x))} 
+      (upper-case (replace-first x "rp_" ""))
+      [:ul {:style "display: none;" :id (str "ul_" x)}
+       (for [y (get map x)]
+         [:li {:style "color: #616161; font-weight: normal; list-style: none; padding-left: -50px;"}
+          (clm-checkbox x y req-map)
+          (upper-case (:column_name y))
+          [:br]
+          (clm-options x y req-map)])
+       [:br]]])])
 
 (defn
   create-grid

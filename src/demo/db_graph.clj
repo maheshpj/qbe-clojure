@@ -1,9 +1,10 @@
 (ns demo.db-graph
   (:use [loom.graph]
         [loom.alg])
-  (:require [demo.action :as axn]))
+  (:require [demo.action :as axn]
+            [clojure.string :only (join) :as st]))
 
-(def owdg (weighted-digraph 
+(def wdg (weighted-digraph 
                [:paa :ast "asset_id"] 
                [:paa :prg "prog_id"] 
                [:st :ast "asset_id"] 
@@ -12,7 +13,7 @@
                [:ph :prg "rel_id"] 
                [:itm :ast "asset_id"]))
 
-(def wdg (weighted-digraph 
+(def owdg (weighted-digraph 
                [:rp_authors :rp_user "user_id"]))
 
 (def g (graph owdg))
@@ -69,10 +70,12 @@
               (map (fn [node] (filter-nodes node distinct-nodes)) 
                    (vals treemap)))))))
 
+;;;; may need to change
 (defn
   get-edge
-  "get list of fk relation like ((:fk-table :pk-table) 'clm-name' "
+  "get list of fk relation like ((:fk-table :pk-table) 'clm-name') "
   [g n1 n2]
+  (println "n1: " n1 " n2: " n2)
   (if (has-edge? g n1 n2)
     (cons (bf-path g n1 n2) (list (weight g n1 n2)))
     (cons (bf-path g n2 n1) (list (weight g n2 n1)))))
@@ -90,10 +93,32 @@
        (demo.db/table-pk (second (first fk-edge)))))
 
 (defn
+  create-onjoins
+  [lst rt-bool]
+  (st/join (map #(str " JOIN "  (name %) " ON " 
+                      (create-on-joins 
+                        (if rt-bool (get-edge owdg % (first lst))
+                          (get-edge owdg (first lst) %))))
+                (second lst))))
+
+(defn
+  process-root-join
+  [root-join]
+  (str ;(name (first root-join))
+       " "
+       (create-onjoins root-join true)))
+
+(defn 
+  process-rest-join
+  [mp]
+  (st/join (map #(create-onjoins % false) mp)))
+
+(defn
   create-join
   []
-  (let [jointr (get-join-tree)]
-    (str axn/rt demo.db/blank (create-on-joins))))
-
+  (let [join-tree (get-join-tree)]
+    (str
+    (process-root-join (reverse (into () (first join-tree))))
+    (process-rest-join (into {} (rest join-tree))))))
 
 

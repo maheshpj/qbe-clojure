@@ -2,10 +2,11 @@
   (:use [demo.db-config])
   (:require [clojure.java.jdbc :as jdbc]
             [utils]
-            [clojure.string :only (trim upper-case replace) :as st]))
+            [clojure.string :only (trim upper-case replace) :as st]
+            [demo.db-graph :as onjoin]))
 
 (def cached-schema nil)
-(def table-pk {})
+(def table-pk nil)
 (def ^:dynamic *SELECT* "SELECT")
 (def ^:dynamic *FROM* "FROM")
 (def ^:dynamic *WHERE* "WHERE")
@@ -176,7 +177,8 @@
   (str 
     (select-clause output)
     (from-clause root)
-    (join-clause-temp tables)
+    ;(join-clause-temp tables)
+    (onjoin/create-join)
     (where-clause criteria)
     (orderby-clause orderby)))
 
@@ -304,6 +306,12 @@
   [schm]
   (apply merge 
          (map (fn [i] (table-pk-map (db-attr :schema) i)) (keys schm))))
+
+(defn 
+  get-pk-ralation
+  [schm]
+  (when (nil? table-pk)
+    (def table-pk (create-pk-ralation schm))))
 
 ;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
