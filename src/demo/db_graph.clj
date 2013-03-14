@@ -1,20 +1,30 @@
 (ns demo.db-graph
   (:use [loom.graph]
         [loom.alg])
-  (:require [demo.action :as axn]
-            [clojure.string :only (join) :as st]))
-
-(def wdg (weighted-digraph 
-               [:paa :ast "asset_id"] 
-               [:paa :prg "prog_id"] 
-               [:st :ast "asset_id"] 
-               [:prg :act "act_id"]
-               [:ph :prg "sub_id"] 
-               [:ph :prg "rel_id"] 
-               [:itm :ast "asset_id"]))
+  (:require [clojure.string :only (join) :as st]))
 
 (def owdg (weighted-digraph 
+               [:AMS_PGM_ASSET_ALIGNMENT :AMS_ASSET "ASSET_ID"] 
+               [:AMS_PGM_ASSET_ALIGNMENT :AMS_PROGRAM "PROGRAM_REF_ID"] 
+               [:AMS_PROGRAM :AMS_ASSET "ASSET_ID"] 
+               [:AMS_PROGRAM :AMS_ACCOUNT "ACCOUNT_ID"]
+               [:AMS_PGM_HCHY :AMS_PROGRAM "SUBJECT_ID"] 
+               [:AMS_PGM_HCHY :AMS_PROGRAM "RELATION_ID"] 
+               [:AMS_ASSESSMENT_ITEM :AMS_ASSET "ASSET_ID"]))
+
+(def wdg (weighted-digraph 
                [:rp_authors :rp_user "user_id"]))
+
+
+(def sel-tables)
+(def table-pk)
+;(def sel-tables #{"ast" "st" "prg" "act"})
+
+(defn 
+  selected-tables
+  [col]
+  (into #{} 
+        (map (fn [i] (first (st/split i #"\."))) col)))
 
 (def g (graph owdg))
 
@@ -30,18 +40,18 @@
 
 (defn
   root-short-path
-  [end]
-  (shortest-path g (keyword axn/rt) (keyword end)))
+  [root end]
+  (shortest-path g (keyword root) (keyword end)))
 
 (defn
   rem-root-from-sel-tables
-  []
-  (remove (fn [tb] (= axn/rt tb)) axn/sel-tables))
+  [root]
+  (remove (fn [tb] (= root tb)) sel-tables))
 
 (defn
   filter-keys
-  [distinct-nodes]
-  (select-keys (bf-span g (keyword axn/rt)) 
+  [root distinct-nodes]
+  (select-keys (bf-span g (keyword root)) 
                distinct-nodes))
 
 (defn
@@ -52,17 +62,17 @@
 (defn
   get-distinct-nodes
   "Get distinct nodes/set after finding the path with each selected table and Root table"
-  []
+  [root]
   (set (reduce (fn [ls1 ls2] (concat ls1 ls2)) 
-               (map (fn [end] (root-short-path end)) 
-                    (rem-root-from-sel-tables)))))
+               (map (fn [end] (root-short-path root end)) 
+                    (rem-root-from-sel-tables root)))))
 
 (defn 
   get-join-tree
   "Get a Map of spanning tree which includes all 'join' nodes"
-  []
-  (let [distinct-nodes (get-distinct-nodes)
-        treemap (filter-keys distinct-nodes)]
+  [root]
+  (let [distinct-nodes (get-distinct-nodes root)
+        treemap (filter-keys root distinct-nodes)]
     (into {}
           (reverse
             (zipmap
@@ -90,12 +100,12 @@
        " = " 
        (name (second (first fk-edge))) 
        "." 
-       (demo.db/table-pk (second (first fk-edge)))))
+       (table-pk (second (first fk-edge)))))
 
 (defn
   create-onjoins
   [lst rt-bool]
-  (st/join (map #(str " JOIN "  (name %) " ON " 
+  (st/join (map #(str " LEFT OUTER JOIN "  (name %) " ON " 
                       (create-on-joins 
                         (if rt-bool (get-edge owdg % (first lst))
                           (get-edge owdg (first lst) %))))
@@ -104,9 +114,7 @@
 (defn
   process-root-join
   [root-join]
-  (str ;(name (first root-join))
-       " "
-       (create-onjoins root-join true)))
+  (str " " (create-onjoins root-join true)))
 
 (defn 
   process-rest-join
@@ -115,10 +123,14 @@
 
 (defn
   create-join
-  []
-  (let [join-tree (get-join-tree)]
+  [root op tbpk]  
+  (def sel-tables (selected-tables op))
+  (println "sel-tables are " sel-tables)
+  (def table-pk tbpk)
+  (println "table-pk are " table-pk)
+  (let [join-tree (get-join-tree root)]
     (str
-    (process-root-join (reverse (into () (first join-tree))))
+    (process-root-join (reverse (into () (first join-tree))))    
     (process-rest-join (into {} (rest join-tree))))))
 
 

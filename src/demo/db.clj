@@ -22,7 +22,7 @@
 (def isnull " IS NULL ")
 (def null-list (list isnull "NULL" "ISNULL" "NIL" "ISNIL"))
 (def number-clm-types (list "numeric" "int" "int4" "number" "integer" "bigint" "smallint"))
-(def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])
+(def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account" "ams_pgm_asset_alignment"])
 
 (def p-join "LEFT OUTER JOIN rp_user ON rp_authors.user_id= rp_user.id")
 
@@ -131,7 +131,7 @@
   [col]
   (doall
     (map 
-      #(st/replace (st/upper-case %) "AMS_PROGRAM" "ams_program_1")
+      #(st/replace (st/upper-case %) "AMS_PROGRAM" "ams_program")
       col)))
 
 (defn
@@ -178,7 +178,7 @@
     (select-clause output)
     (from-clause root)
     ;(join-clause-temp tables)
-    (onjoin/create-join)
+    (onjoin/create-join root output table-pk)
     (where-clause criteria)
     (orderby-clause orderby)))
 

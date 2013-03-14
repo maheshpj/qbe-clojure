@@ -7,14 +7,6 @@
 (def rt)
 ;(def rt "ast")
 (def ord)
-(def sel-tables)
-;(def sel-tables #{"ast" "st" "prg" "act"})
-
-(defn 
-  selected-tables
-  [col]
-  (into #{} 
-        (map (fn [i] (first (st/split i #"\."))) col)))
 
 (defn
   filter-req
@@ -53,9 +45,7 @@
   (def op (filter-list-by-prefix "CLM" req-map))
   (def cr (filter-map-by-prefix "TXT" req-map))
   (def ord (filter-list-by-prefix "ORD" req-map))
-  (def rt (:RT req-map))
-  (def sel-tables (selected-tables op))
-  (println sel-tables))
+  (def rt (:RT req-map)))
 
 (defn
   get-result

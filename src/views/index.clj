@@ -103,9 +103,10 @@
   [:ul
    (for [x (keys map)]
      [:li {:style "font-weight: bold; color: dimgray; list-style: square;"
-           :onclick (li-toggle (str "ul_" x))} 
+           ;:onclick (li-toggle (str "ul_" x))
+           } 
       (upper-case (replace-first x "rp_" ""))
-      [:ul {:style "display: none;" :id (str "ul_" x)}
+      [:ul {:style "display: inline;" :id (str "ul_" x)}
        (for [y (get map x)]
          [:li {:style "color: #616161; font-weight: normal; list-style: none; padding-left: -50px;"}
           (clm-checkbox x y req-map)
