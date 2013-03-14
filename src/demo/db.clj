@@ -5,8 +5,8 @@
             [clojure.string :only (trim upper-case replace) :as st]
             [demo.db-graph :as onjoin]))
 
-(def cached-schema nil)
-(def table-pk nil)
+(def cached-schema)
+(def table-pk)
 (def ^:dynamic *SELECT* "SELECT")
 (def ^:dynamic *FROM* "FROM")
 (def ^:dynamic *WHERE* "WHERE")
@@ -104,7 +104,9 @@
         typename (get-clm-type-name t-c)]
     (if (not-any? (fn [i] (= i typename)) number-clm-types)
       (str (clm-up keystr) like "'%" (val-up (val i)) "%' ")
-      (str keystr " = " (val i)))))
+      (if (number? (val i))
+        (str keystr " = " (val i))
+        (str keystr " = -1")))))
 
 (defn
   create-coll
@@ -177,8 +179,7 @@
   (str 
     (select-clause output)
     (from-clause root)
-    ;(join-clause-temp tables)
-    (onjoin/create-join root output table-pk)
+    (onjoin/create-join (keyword root) output table-pk)
     (where-clause criteria)
     (orderby-clause orderby)))
 
@@ -302,13 +303,13 @@
 
 (defn
   create-pk-ralation
-  "Creats a map of table : PK ralation"
   [schm]
   (apply merge 
          (map (fn [i] (table-pk-map (db-attr :schema) i)) (keys schm))))
 
 (defn 
   get-pk-ralation
+  "Creats a map of table : PK ralation"
   [schm]
   (when (nil? table-pk)
     (def table-pk (create-pk-ralation schm))))

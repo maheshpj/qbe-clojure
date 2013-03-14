@@ -3,40 +3,30 @@
         [loom.alg])
   (:require [clojure.string :only (join) :as st]))
 
-(def owdg (weighted-digraph 
+(def wdg (weighted-digraph 
                [:AMS_PGM_ASSET_ALIGNMENT :AMS_ASSET "ASSET_ID"] 
                [:AMS_PGM_ASSET_ALIGNMENT :AMS_PROGRAM "PROGRAM_REF_ID"] 
-               [:AMS_PROGRAM :AMS_ASSET "ASSET_ID"] 
+               [:AMS_WF_STATE_SMY :AMS_ASSET "ASSET_ID"] 
                [:AMS_PROGRAM :AMS_ACCOUNT "ACCOUNT_ID"]
                [:AMS_PGM_HCHY :AMS_PROGRAM "SUBJECT_ID"] 
                [:AMS_PGM_HCHY :AMS_PROGRAM "RELATION_ID"] 
                [:AMS_ASSESSMENT_ITEM :AMS_ASSET "ASSET_ID"]))
 
-(def wdg (weighted-digraph 
+(def owdg (weighted-digraph 
                [:rp_authors :rp_user "user_id"]))
 
 
 (def sel-tables)
 (def table-pk)
-;(def sel-tables #{"ast" "st" "prg" "act"})
+;(def table-pk {:AMS_WF_STATE_SMY "REFERENCE_ID", :AMS_ASSET "ASSET_ID", :AMS_PROGRAM "P_REFERENCE_ID", :AMS_ACCOUNT "A_REFERENCE_ID"})
+;(def sel-tables #{"AMS_ASSET" "AMS_WF_STATE_SMY" "AMS_PROGRAM" "AMS_ACCOUNT"})
 
 (defn 
   selected-tables
   [col]
-  (into #{} 
-        (map (fn [i] (first (st/split i #"\."))) col)))
+  (into #{} (map (fn [i] (first (st/split i #"\."))) col)))
 
 (def g (graph owdg))
-
-(defn
-  create-WDG
-  []
-  ())
-
-(defn 
-  create-graph
-  []
-  ())
 
 (defn
   root-short-path
@@ -48,16 +38,21 @@
   [root]
   (remove (fn [tb] (= root tb)) sel-tables))
 
+
+(defn
+  check-kee
+  [kee distinct-nodes]
+  (not (not-any? (fn [node] (= node kee)) distinct-nodes)))
+
 (defn
   filter-keys
-  [root distinct-nodes]
-  (select-keys (bf-span g (keyword root)) 
-               distinct-nodes))
+  [root distinct-nodes spantrkeys]
+  (filter (fn [kee] (check-kee kee distinct-nodes)) spantrkeys))
 
 (defn
   filter-nodes
   [col distinct-nodes]
-  (reverse (filter (fn [tb] (contains? distinct-nodes tb)) col)))
+  (filter (fn [tb] (contains? distinct-nodes tb)) col))
 
 (defn
   get-distinct-nodes
@@ -71,21 +66,18 @@
   get-join-tree
   "Get a Map of spanning tree which includes all 'join' nodes"
   [root]
-  (let [distinct-nodes (get-distinct-nodes root)
-        treemap (filter-keys root distinct-nodes)]
-    (into {}
-          (reverse
-            (zipmap
-              (keys treemap)
-              (map (fn [node] (filter-nodes node distinct-nodes)) 
-                   (vals treemap)))))))
+  (let [spantr (reverse (bf-span g root))
+        distinct-nodes (get-distinct-nodes root)
+        kees (filter-keys root distinct-nodes (keys spantr))]
+    (zipmap kees
+            (map (fn [node] (filter-nodes node distinct-nodes)) (vals spantr)))))
 
 ;;;; may need to change
 (defn
   get-edge
   "get list of fk relation like ((:fk-table :pk-table) 'clm-name') "
   [g n1 n2]
-  (println "n1: " n1 " n2: " n2)
+  ;(println "n1: " n1 " n2: " n2)
   (if (has-edge? g n1 n2)
     (cons (bf-path g n1 n2) (list (weight g n1 n2)))
     (cons (bf-path g n2 n1) (list (weight g n2 n1)))))
@@ -94,12 +86,9 @@
   create-on-joins
   "create ON--JOIN relation e.g 'tab1.pk = tab2.fk', input is output of get-edge()"
   [fk-edge]
-  (str (name (ffirst fk-edge)) 
-       "." 
-       (second fk-edge) 
-       " = " 
-       (name (second (first fk-edge))) 
-       "." 
+  (str (name (ffirst fk-edge)) "." 
+       (second fk-edge) " = " 
+       (name (second (first fk-edge))) "." 
        (table-pk (second (first fk-edge)))))
 
 (defn
@@ -123,14 +112,14 @@
 
 (defn
   create-join
-  [root op tbpk]  
-  (def sel-tables (selected-tables op))
-  (println "sel-tables are " sel-tables)
-  (def table-pk tbpk)
-  (println "table-pk are " table-pk)
-  (let [join-tree (get-join-tree root)]
-    (str
-    (process-root-join (reverse (into () (first join-tree))))    
-    (process-rest-join (into {} (rest join-tree))))))
-
+  ([] (create-join :AMS_ASSET nil table-pk))
+  ([root op tbpk]  
+    (def sel-tables (selected-tables op))
+    (println "sel-tables are " sel-tables)
+    (def table-pk tbpk)
+    (println "table-pk are " table-pk)
+    (let [join-tree (get-join-tree root)]
+      (str
+        (process-root-join (reverse (into () (first join-tree))))    
+        (process-rest-join (into {} (rest join-tree)))))))
 

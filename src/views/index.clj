@@ -157,7 +157,6 @@
     "Result"
     (reverse (action/get-header-clms))
     (let [result (action/get-result)]
-      (println result)
       result)))
 
 (defn

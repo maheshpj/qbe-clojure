@@ -5,7 +5,6 @@
 (def op)
 (def cr)
 (def rt)
-;(def rt "ast")
 (def ord)
 
 (defn
@@ -61,7 +60,6 @@
   get-schema
   []
   (db/fetch-db-table-columns-map)
-  ;(println "schema fetched successfuly!")
   (db/get-pk-ralation db/cached-schema)
   db/cached-schema)
 
