@@ -4,17 +4,18 @@
   (:require [clojure.string :only (join) :as st]))
 
 (def wdg (weighted-digraph 
-               [:AMS_PGM_ASSET_ALIGNMENT :AMS_ASSET "ASSET_ID"] 
-               [:AMS_PGM_ASSET_ALIGNMENT :AMS_PROGRAM "PROGRAM_REF_ID"] 
-               [:AMS_WF_STATE_SMY :AMS_ASSET "ASSET_ID"] 
-               [:AMS_PROGRAM :AMS_ACCOUNT "ACCOUNT_ID"]
-               [:AMS_PGM_HCHY :AMS_PROGRAM "SUBJECT_ID"] 
-               [:AMS_PGM_HCHY :AMS_PROGRAM "RELATION_ID"] 
-               [:AMS_ASSESSMENT_ITEM :AMS_ASSET "ASSET_ID"]))
+           [:AMS_PGM_ASSET_ALIGNMENT :AMS_ASSET "ASSET_ID"] 
+           [:AMS_PGM_ASSET_ALIGNMENT :AMS_PROGRAM "PROGRAM_REF_ID"] 
+           [:AMS_WF_STATE_SMY :AMS_ASSET "ASSET_ID"] 
+           [:AMS_PROGRAM :AMS_ACCOUNT "ACCOUNT_ID"]
+           [:AMS_PGM_HCHY :AMS_PROGRAM "SUBJECT_ID"] 
+           [:AMS_PGM_HCHY :AMS_PROGRAM "RELATION_ID"] 
+           [:AMS_ASSESSMENT_ITEM :AMS_ASSET "ASSET_ID"]))
 
 (def owdg (weighted-digraph 
-               [:rp_authors :rp_user "user_id"]))
+            [:rp_authors :rp_user "user_id"]))
 
+(def g (graph owdg))
 
 (def sel-tables)
 (def table-pk)
@@ -25,8 +26,6 @@
   selected-tables
   [col]
   (into #{} (map (fn [i] (first (st/split i #"\."))) col)))
-
-(def g (graph owdg))
 
 (defn
   root-short-path
@@ -94,16 +93,16 @@
 (defn
   create-onjoins
   [lst rt-bool]
-  (st/join (map #(str " LEFT OUTER JOIN "  (name %) " ON " 
-                      (create-on-joins 
-                        (if rt-bool (get-edge owdg % (first lst))
-                          (get-edge owdg (first lst) %))))
-                (second lst))))
+  (st/join 
+    (map #(str " LEFT OUTER JOIN "  (name %) " ON " 
+               (create-on-joins (if rt-bool (get-edge owdg % (first lst))
+                                  (get-edge owdg (first lst) %))))
+         (second lst))))
 
 (defn
   process-root-join
   [root-join]
-  (str " " (create-onjoins root-join true)))
+  (create-onjoins root-join true))
 
 (defn 
   process-rest-join
@@ -114,12 +113,8 @@
   create-join
   ([] (create-join :AMS_ASSET nil table-pk))
   ([root op tbpk]  
-    (def sel-tables (selected-tables op))
-    (println "sel-tables are " sel-tables)
-    (def table-pk tbpk)
-    (println "table-pk are " table-pk)
+    (def sel-tables (selected-tables op)) ;(println "sel-tables are " sel-tables)
+    (def table-pk tbpk) ;(println "table-pk are " table-pk)
     (let [join-tree (get-join-tree root)]
-      (str
-        (process-root-join (reverse (into () (first join-tree))))    
-        (process-rest-join (into {} (rest join-tree)))))))
-
+      (str (process-root-join (reverse (into () (first join-tree))))    
+           (process-rest-join (into {} (rest join-tree)))))))

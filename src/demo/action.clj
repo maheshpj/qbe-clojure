@@ -10,9 +10,7 @@
 (defn
   filter-req
   [prefix req-map]
-  (into {}
-        (filter #(.startsWith (name (key %)) prefix) 
-                req-map)))
+  (into {} (filter #(.startsWith (name (key %)) prefix) req-map)))
 
 (defn
   remove-db-prefix
@@ -24,20 +22,16 @@
   "Return list of filtered request with prefix"
   [prefix req-map]
   (let [mp (filter-req prefix req-map)]
-    (map #(remove-db-prefix % prefix)
-         (keys mp))))
+    (map #(remove-db-prefix % prefix) (keys mp))))
 
 (defn
   filter-map-by-prefix
   "Return map of filtered request with prefix"
   [prefix req-map]
   (let [crmap (filter-req prefix req-map)]
-    (zipmap 
-      (map #(keyword 
-              (remove-db-prefix % prefix))
-           (keys crmap))
-      (vals crmap))))
-
+    (zipmap (map #(keyword (remove-db-prefix % prefix))
+                 (keys crmap))
+            (vals crmap))))
 (defn
   create-query-seqs
   [req-map]
@@ -50,11 +44,7 @@
   get-result
   []
   (when-not (utils/if-nil-or-empty op)
-    (if (db/is-db-type-ora)
-      (db/execute-query 
-        (db/create-query-str-for-ora op cr rt ord))
-      (db/execute-query 
-        (db/create-query-str-for-pg op cr rt ord)))))
+      (db/execute-query (db/create-query-str op cr rt ord))))
 
 (defn
   get-schema
@@ -68,8 +58,7 @@
   [prefix replaceby coll]
   (map #(st/capitalize 
           (st/replace-first 
-            (st/upper-case %) prefix replaceby)) 
-       coll))
+            (st/upper-case %) prefix replaceby)) coll))
 
 (defn
   get-header-clms

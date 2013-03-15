@@ -123,3 +123,21 @@
    From rp_authors ath
      LEFT OUTER JOIN rp_user usr
        ON ath.user_id= usr.id")
+
+
+(def p-join "LEFT OUTER JOIN rp_user ON rp_authors.user_id= rp_user.id")
+
+(def o-join 
+  (str "LEFT OUTER JOIN ams_pgm_asset_alignment " 
+       "ON ams_pgm_asset_alignment.asset_id = ams_asset.asset_id "
+       "LEFT OUTER JOIN ams_program ams_program_1 "
+       "ON ams_pgm_asset_alignment.program_ref_id = ams_program_1.reference_id "
+       "LEFT OUTER JOIN ams_wf_state_smy " 
+       "ON ams_pgm_asset_alignment.asset_id = ams_wf_state_smy.asset_id "
+       "LEFT OUTER JOIN ams_account " 
+       "ON ams_program_1.account_id = ams_account.reference_id "
+       "LEFT OUTER JOIN ams_pgm_hchy " 
+       "ON ams_pgm_asset_alignment.program_ref_id = ams_pgm_hchy.subject_id "
+       "LEFT OUTER JOIN ams_program ams_program_2 " 
+       "ON ams_program_2.reference_id     = ams_pgm_hchy.relation_id"))
+

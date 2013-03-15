@@ -5,8 +5,8 @@
             [clojure.string :only (trim upper-case replace) :as st]
             [demo.db-graph :as onjoin]))
 
-(def cached-schema)
-(def table-pk)
+(def cached-schema nil)
+(def table-pk nil)
 (def ^:dynamic *SELECT* "SELECT")
 (def ^:dynamic *FROM* "FROM")
 (def ^:dynamic *WHERE* "WHERE")
@@ -22,23 +22,7 @@
 (def isnull " IS NULL ")
 (def null-list (list isnull "NULL" "ISNULL" "NIL" "ISNIL"))
 (def number-clm-types (list "numeric" "int" "int4" "number" "integer" "bigint" "smallint"))
-(def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account" "ams_pgm_asset_alignment"])
-
-(def p-join "LEFT OUTER JOIN rp_user ON rp_authors.user_id= rp_user.id")
-
-(def o-join 
-  (str "LEFT OUTER JOIN ams_pgm_asset_alignment " 
-       "ON ams_pgm_asset_alignment.asset_id = ams_asset.asset_id "
-       "LEFT OUTER JOIN ams_program ams_program_1 "
-       "ON ams_pgm_asset_alignment.program_ref_id = ams_program_1.reference_id "
-       "LEFT OUTER JOIN ams_wf_state_smy " 
-       "ON ams_pgm_asset_alignment.asset_id = ams_wf_state_smy.asset_id "
-       "LEFT OUTER JOIN ams_account " 
-       "ON ams_program_1.account_id = ams_account.reference_id "
-       "LEFT OUTER JOIN ams_pgm_hchy " 
-       "ON ams_pgm_asset_alignment.program_ref_id = ams_pgm_hchy.subject_id "
-       "LEFT OUTER JOIN ams_program ams_program_2 " 
-       "ON ams_program_2.reference_id     = ams_pgm_hchy.relation_id"))
+(def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])
 
 (defn
   is-db-type-ora
@@ -111,7 +95,7 @@
 (defn
   create-coll
   [criteria]
-  (println criteria)
+  ;(println criteria)
   (map 
     (fn [i] (if-not (check-is-null i null-list) 
        (str (name (key i)) isnull)
@@ -127,42 +111,16 @@
             #(str %1 ~str %2) 
             ~coll))))
 
-;;;;;; need to remove 
-(defn
-  replace-prog
-  [col]
-  (doall
-    (map 
-      #(st/replace (st/upper-case %) "AMS_PROGRAM" "ams_program")
-      col)))
-
 (defn
   select-clause
   [output]
-  (cl *SELECT* comma (replace-prog output)))
+  (cl *SELECT* comma output))
 
 (defn
   from-clause
   [root]
   (cl *FROM* nil root))
   
-(defn
-  join-clause
-  [tables]
-  (when-not (utils/if-nil-or-empty tables)
-    (str blank 
-         (for [tbl tables]
-           (str (cl *JOIN* nil (list tbl))
-                (cl *JOIN-ON* nil (list tbl)))))))
-
-(defn
-  join-clause-temp
-  [tables]
-  (when-not (utils/if-nil-or-empty tables)
-    (if (= db-type "postgres")
-      (str blank p-join)
-      (str blank o-join))))
-
 (defn
   where-clause
   [criteria]
@@ -175,7 +133,8 @@
 
 (defn
   generate-query-str
-  [output root tables criteria orderby]
+  "Generates the query string from UI values"
+  [output root criteria orderby]
   (str 
     (select-clause output)
     (from-clause root)
@@ -183,21 +142,27 @@
     (where-clause criteria)
     (orderby-clause orderby)))
 
+
+(defn
+  create-query-str
+  [op cr rt ord]
+  (let [query (st/trim (generate-query-str op rt cr ord))]
+    (println query)
+    query))
+
 ;;;;;;;;;;;;;; DATABASE METADATA ;;;;;;;;;;;;;;;;;;;
 
 (defmacro 
   get-sql-metadata
   "Macro for getting DB Metadata"
   [db method & args] 
-  `(jdbc/with-connection 
-     ~db 
-     (jdbc/transaction
+  `(jdbc/with-connection ~db 
+     (jdbc/transaction 
        (doall
-         (resultset-seq (-> 
-                          (jdbc/connection)
-                          (.getMetaData) 
-                          (~method ~@args)))))))
-
+         (resultset-seq 
+           (-> (jdbc/connection)
+             (.getMetaData) 
+             (~method ~@args)))))))
 
 (defn
   get-tables
@@ -245,14 +210,6 @@
     nil schm table))
 
 (defn
-  table-details
-  [schm prefix]
-  (into #{}
-        (map 
-          #(list (% :table_name) (% :column_name) (% :type_name))
-          (get-columns schm prefix))))
-
-(defn
   table-pk-map
   [schm tbl]
   (let [mp (first (get-table-pk schm tbl))]
@@ -288,8 +245,7 @@
         (fetch-table-columns-map 
           (db-attr :schema) 
           (db-attr :table_prefix))
-        (map #(st/upper-case %) 
-             proj_selected_tables))
+        (map (fn [tb] (st/upper-case tb)) proj_selected_tables))
       (fetch-table-columns-map 
         (db-attr :schema) 
         (db-attr :table_prefix))))
@@ -304,6 +260,7 @@
 (defn
   create-pk-ralation
   [schm]
+  (println "Creating PK Realations...")
   (apply merge 
          (map (fn [i] (table-pk-map (db-attr :schema) i)) (keys schm))))
 
@@ -313,103 +270,6 @@
   [schm]
   (when (nil? table-pk)
     (def table-pk (create-pk-ralation schm))))
-
-;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def poutput '("rp_user.id" 
-                "rp_authors.first_name" 
-                "rp_authors.last_name" 
-                "rp_user.dept" 
-                "rp_user.role"))
-(def proot '("rp_authors"))
-(def ptables '("rp_user"))
-(def pcriteria '())
-(def porderby '("rp_user.id"))
-
-(def o-poutput '("ams_program.code" 
-                "ams_account.name" 
-                "ams_program.name" 
-                "ams_program.name" 
-                "ams_asset.asset_id"
-                "ams_asset.asset_type"
-                "ams_wf_state_smy.trh_ath"))
-(def o-proot '("ams_asset"))
-(def o-ptables '("ams_pgm_asset_alignment" "ams_program ams_program_1" "ams_wf_state_smy" "ams_account" "ams_pgm_hchy" "ams_program ams_program_2"))
-(def o-pcriteria {:ams_wf_state_smy.activity_code  "TRH_TRH",
-                  :ams_program_2.parent_id "IS NULL"})
-(def o-porderby '("ams_asset.asset_id"))
-
-(defn
-  create-query-str-for-pg
-  [op cr rt ord]
-  (let [query 
-        (st/trim 
-          (generate-query-str 
-            op 
-            rt 
-            ptables 
-            cr 
-            ord))]
-    (println query)
-    query))
-
-(defn
-  create-query-str-for-ora
-  [op cr rt ord]
-  (let [query 
-        (st/trim 
-          (generate-query-str 
-            op 
-            rt 
-            o-ptables 
-            cr 
-            ord))]
-    (println query)
-    query))
-
-(defn
-  test-get-relations
-  []
-  (get-relationship 
-    (db-attr :schema) 
-    "AMS_ASSET" 
-    "AMS_WF_STATE"))
-
-(defn
-  test-get-table-fk
-  []
-  (get-table-fk 
-    (db-attr :schema) 
-    "AMS_ASSET"))
-
-(defn
-  test-get-table-pk
-  []
-  (get-table-pk 
-    (db-attr :schema) 
-    "AMS_ASSET"))
-
-(defn
-  testpg-get-relations
-  []
-  (get-relationship 
-    (db-attr :schema) 
-    "rp_user" 
-    "rp_authors"))
-
-(defn
-  testpg-get-table-fk
-  []
-  (get-table-fk 
-    (db-attr :schema) 
-    "rp_user"))
-
-(defn
-  testpg-get-table-pk
-  []
-  (get-table-pk 
-    (db-attr :schema) 
-    "rp_user"))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 
@@ -424,3 +284,23 @@
   "for db sanity check"
   []
   (jdbc/with-connection (dbs)))
+
+;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmacro tst [fn & args]
+  `(~fn (db-attr :schema) ~@args))
+
+(defn test-get-relations []
+  (if (is-db-type-ora)
+    (tst get-relationship "AMS_ASSET" "AMS_WF_STATE")
+    (tst get-relationship "rp_user" "rp_authors")))
+
+(defn test-get-table-fk []
+  (if (is-db-type-ora)
+    (tst get-table-fk "AMS_ASSET")
+    (tst get-table-fk "rp_user")))
+
+(defn test-get-table-pk []
+  (if (is-db-type-ora)
+    (tst get-table-pk "AMS_ASSET")
+    (tst get-table-pk "rp_user")))

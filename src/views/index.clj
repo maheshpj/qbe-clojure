@@ -9,22 +9,17 @@
 (defn
   grid
   [clm-names-vec data-map]
-  [:table 
-     {:style "border: 1px solid grey; width: 100%"}
+  [:table {:style "border: 1px solid grey; width: 100%"}
      [:thead
      [:tr 
-      (utils/map-tag 
-        :th 
-        {:style "text-align: left; color: dimgray"} 
-        (map #(replace-first % "." " ") clm-names-vec))]]
+      (utils/map-tag :th {:style "text-align: left; color: dimgray"} 
+                     (map #(replace-first % "." " ") clm-names-vec))]]
      [:tbody
-     [:tr {:style "background: -moz-linear-gradient(top, #ffffff, #dddddd);"}
       (for [x data-map]
-        [:tr  x
-         (utils/map-tag 
-           :td 
-           {:style "text-align: left; color: grey; border-top: 0px solid grey; background: -moz-linear-gradient(top, #fdfdfd, #e5e5e5);"} 
-           x)])]]])
+        [:tr {:style "background: -moz-linear-gradient(top, #ffffff, #dddddd);"}
+         (utils/map-tag :td {:style (str "text-align: left; color: grey; border-top: 0px solid grey;" 
+                                         "background: -moz-linear-gradient(top, #fdfdfd, #e5e5e5);")} 
+                        x)])]])
 
 (defn
   create-id
@@ -54,7 +49,7 @@
   (let [txtname (create-id "TXT" x y)]
     (text-field {:placeholder (str "criteria " (:type_name y)) 
                  :id txtname
-                 :style "margin:5px 5px 5px 20px"} 
+                 :style "margin:5px 5px 5px 20px; width: 150pt"} 
                 txtname
                 ((keyword txtname) req-map))))
 
@@ -102,9 +97,8 @@
   [req-map map]
   [:ul
    (for [x (keys map)]
-     [:li {:style "font-weight: bold; color: dimgray; list-style: square;"
-           ;:onclick (li-toggle (str "ul_" x))
-           } 
+     [:li {:style "font-weight: bold; color: dimgray; list-style: square;"}
+           ;:onclick (li-toggle (str "ul_" x))} 
       (upper-case (replace-first x "rp_" ""))
       [:ul {:style "display: inline;" :id (str "ul_" x)}
        (for [y (get map x)]
@@ -163,13 +157,16 @@
   create-run-btn
   []
   (submit-button 
-    {:style "float: right; width: 150px; border: 1px solid white; height: 30px; background-color: darkkhaki; margin-top: 5px; color: saddlebrown; font: 18px bold;"} 
+    {:style (str "float: right; width: 150px; border: 1px solid white; height: 30px;" 
+                 "background-color: darkkhaki; margin-top: 5px; color: saddlebrown; font: 18px bold;")} 
     "Run!"))
 
 (defn
   create-reset-btn
   []
-  [:div {:style "float: left; background-color: lightgrey; margin-top: 7px; width: 55px; text-align: center; height: 25px; vertical-align: middle; line-height: 20pt; border: 1px solid grey"}
+  [:div {:style (str "float: left; background-color: lightgrey; margin-top: 7px;" 
+                     "width: 55px; text-align: center; height: 25px; vertical-align: middle;" 
+                     "line-height: 20pt; border: 1px solid grey")}
    (link-to "/" "Reset")])
 
 (defn

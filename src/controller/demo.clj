@@ -12,7 +12,7 @@
   index
   ([] (index '()))
   ([req-map]
-    (println req-map)
+    ;(println req-map)
     (html5
       [:head
        [:meta {:charset "utf-8"}]
@@ -27,9 +27,8 @@
   [req]
   ;(println req)
   (if-not (utils/if-nil-or-empty req)
-    (index 
-      (utils/convert-form-string-to-map
-        (slurp (req :body))))
+    (index (utils/convert-form-string-to-map
+             (slurp (req :body))))
     (ring/redirect "/")))
 
 (defroutes 
