@@ -12,7 +12,8 @@
 
 (defroutes routes
   cntr/routes
-  (route/files "/")
+  (route/resources "/")
+  (route/files "/" {:root "public"})
   (route/not-found "<h1>Oooopsss ... Page not found :( </h1>"))
 
 (def application routes)

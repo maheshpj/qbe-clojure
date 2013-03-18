@@ -1,7 +1,7 @@
 (ns controller.demo
   (:use [compojure.core :only (defroutes GET POST PUT)]
         [ring.adapter.jetty :only (run-jetty)]
-        [hiccup.page :only (html5 include-css)])
+        [hiccup.page :only (html5 include-css include-js)])
   (:require [compojure.route :as route]
             [compojure.handler :as handler]
             [ring.util.response :as ring]
@@ -18,8 +18,10 @@
        [:meta {:charset "utf-8"}]
        [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge,chrome=1"}]
        [:meta {:name "viewport" :content "width=device-width, initial-scale=1, maximum-scale=1"}]
-       [:title "AutoQuery Demo"]]
-      [:body {:style "font-family: Century Gothic; background-color: oldlace;"} 
+       [:title "AutoQuery Demo"]
+       (include-css "/css/demo.css")
+       (include-js "/js/demo.js")]
+      [:body {:class "bdy"}
        (idx/schema-form req-map)])))
 
 (defn
