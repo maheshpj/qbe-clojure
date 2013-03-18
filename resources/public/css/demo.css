@@ -3,11 +3,20 @@
 	font-family: Century Gothic; 
 	background-color: oldlace;
 	}
+
+.open {
+	display: block;
+	padding-left: 14px;
+	}
+
+.closed {
+	display: none;
+	}
 	
 ul li {
 	font-weight: bold; 
 	color: dimgray; 
-	list-style: square;
+	list-style: none;
 	}
 	
 ul li ul {
