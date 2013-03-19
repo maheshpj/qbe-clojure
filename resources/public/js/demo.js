@@ -18,15 +18,19 @@ function dislayOptions(clmnm, name) {
 
 function toggle(id){
     ul = "ul_" + id;
-    img = "img_" + id;
+    //img = "img_" + id;
+    hdn = "HDN." + id;
     ulElement = document.getElementById(ul);
+    hdnElement = document.getElementById(hdn);
     //imgElement = document.getElementById(img);
     if (ulElement){
         if (ulElement.className == 'closed'){
             ulElement.className = "open";
+            hdnElement.value = "open";
             //imgElement.src = "opened.gif";
         } else {
             ulElement.className = "closed";
+            hdnElement.value = "closed";
             //imgElement.src = "closed.gif";
         }
     }

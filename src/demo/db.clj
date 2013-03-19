@@ -22,6 +22,7 @@
 (def isnull " IS NULL ")
 (def null-list (list isnull "NULL" "ISNULL" "NIL" "ISNIL"))
 (def number-clm-types (list "numeric" "int" "int4" "number" "integer" "bigint" "smallint"))
+(def number-symbols (list ">" "<" "=" ">=" "<=" "between" "and" "or" "!=" "<>"))
 (def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])
 
 (defn
@@ -83,6 +84,7 @@
 (defn
   cr-alpha-numeric
   [i]
+  (println "(integer? (val i) " (.valueOf (val i)))
   (let [keystr (name (key i))
         t-c  (st/split keystr #"\.")
         typename (get-clm-type-name t-c)]
@@ -90,7 +92,9 @@
       (str (clm-up keystr) like "'%" (val-up (val i)) "%' ")
       (if (number? (val i))
         (str keystr " = " (val i))
-        (str keystr " = -1")))))
+        (if (not-any? #(.startsWith (val i) %) number-symbols)
+          (str keystr " = -1")
+          (str keystr (val i)))))))
 
 (defn
   create-coll

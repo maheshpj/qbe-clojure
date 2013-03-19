@@ -27,7 +27,7 @@
 (defn
   create-id
   [prefix tab name]
-  (str prefix "." tab "." (:column_name name)))
+  (str prefix "." tab (if (nil? name) "" (str "." (:column_name name)))))
 
 (defn
   show-div
@@ -84,6 +84,14 @@
        [:br]]])])
 
 (defn
+  tr-class
+  [x req-map]
+  (let [val ((keyword (create-id "HDN" x nil)) req-map)]
+    (if (nil? val)
+      "closed"
+      val)))
+
+(defn
   bullets
   "Create left side panel of Table - column tree"
   [req-map map]
@@ -92,7 +100,9 @@
      [:li (link-to {:style "text-decoration: none;" :id (str "img_" x) 
                     :border "0" :onclick (str "toggle('" x "');")} "#" "+ ")
       (upper-case (replace-first x prf ""))
-      [:ul {:class "closed" :id (str "ul_" x)}
+      (let [hdnf (create-id "HDN" x nil)]
+        (hidden-field  {:id hdnf} hdnf (tr-class x req-map)))
+      [:ul {:class (tr-class x req-map) :id (str "ul_" x)}
        (for [y (get map x)]
          [:li 
           (clm-checkbox x y req-map)
