@@ -1,7 +1,8 @@
 (ns controller.demo
   (:use [compojure.core :only (defroutes GET POST PUT)]
         [ring.adapter.jetty :only (run-jetty)]
-        [hiccup.page :only (html5 include-css include-js)])
+        [hiccup.page :only (html5 include-css include-js)]
+        [hiccup.util :only (escape-html )])
   (:require [compojure.route :as route]
             [compojure.handler :as handler]
             [ring.util.response :as ring]

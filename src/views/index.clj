@@ -2,11 +2,10 @@
   (:use [hiccup.page :only (html5)]
         [hiccup.form]
         [hiccup.element]
-        [clojure.string :only (upper-case replace-first capitalize)])
-  (:require [demo.action :as action]
-            [utils]))
+        [clojure.string :only (upper-case replace-first capitalize)]
+        [utils])
+  (:require [demo.action :as action]))
 
-(def prf "rp_")
 (def root-err "Please select a Root")
 (def form-enctype "application/x-www-form-urlencoded")
 
@@ -32,12 +31,12 @@
 (defn
   show-div
   [x y req-map]
-  (if ((keyword (create-id "CLM" x y)) req-map) "inline" "none"))
+  (if ((keyword (create-id CLM x y)) req-map) "inline" "none"))
 
 (defn
   option-criteria
   [x y req-map]
-  (let [txtname (create-id "TXT" x y)]
+  (let [txtname (create-id TXT x y)]
     (text-field {:placeholder (str "criteria " (:type_name y)) 
                  :id txtname
                  :class "crit-txt"} 
@@ -46,13 +45,13 @@
 (defn
   option-ord-by
   [x y req-map]
-  (let [ordname (create-id "ORD" x y)]
+  (let [ordname (create-id ORD x y)]
     (check-box {:id ordname} ordname ((keyword ordname) req-map))))
 
 (defn
   clm-options
   [x y req-map]
-  [:div {:id (create-id "DIV" x y)  
+  [:div {:id (create-id DIV x y)  
          :style (str "display:" (show-div x y req-map))}
    (option-criteria x y req-map)
    (option-ord-by x y req-map) "^"])
@@ -60,8 +59,8 @@
 (defn
   clm-checkbox
   [x y req-map]
-  (let [clmname (create-id "CLM" x y)
-        divid (create-id "DIV" x y)]
+  (let [clmname (create-id CLM x y)
+        divid (create-id DIV x y)]
     (check-box {:id clmname 
                 :onclick (str "dislayOptions('" clmname "', '"divid"')") }
                clmname ((keyword clmname) req-map))))
@@ -71,7 +70,7 @@
   "Create left side panel of Table - column tree"
   [req-map map]
   [:ul
-   (for [x (keys map)]
+   (for [x (sort (keys map))]
      [:li 
       (upper-case (replace-first x prf ""))
       [:ul 
@@ -86,10 +85,24 @@
 (defn
   tr-class
   [x req-map]
-  (let [val ((keyword (create-id "HDN" x nil)) req-map)]
-    (if (nil? val)
-      "closed"
-      val)))
+  (let [val ((keyword (create-id HDN x nil)) req-map)]
+    (if (nil? val) "closed" val)))
+
+(defn
+  get-branch
+  [req-map map x]
+  (for [y (get map x)]
+    [:li 
+     (clm-checkbox x y req-map)
+     (upper-case (:column_name y))
+     [:br]
+     (clm-options x y req-map)]))
+
+(defn
+  hdn-field
+  [x req-map]
+  (let [hdnf (create-id HDN x nil)]
+    (hidden-field  {:id hdnf} hdnf (tr-class x req-map))))
 
 (defn
   bullets
@@ -100,15 +113,9 @@
      [:li (link-to {:style "text-decoration: none;" :id (str "img_" x) 
                     :border "0" :onclick (str "toggle('" x "');")} "#" "+ ")
       (upper-case (replace-first x prf ""))
-      (let [hdnf (create-id "HDN" x nil)]
-        (hidden-field  {:id hdnf} hdnf (tr-class x req-map)))
+      (hdn-field x req-map)
       [:ul {:class (tr-class x req-map) :id (str "ul_" x)}
-       (for [y (get map x)]
-         [:li 
-          (clm-checkbox x y req-map)
-          (upper-case (:column_name y))
-          [:br]
-          (clm-options x y req-map)])
+       (get-branch req-map map x)
        [:br]]])])
 
 (defn
@@ -125,9 +132,9 @@
     [:h2 caption]
     [:div#root-div "Root:  "
      (let [options (map #(upper-case (replace-first  % prf "")) (keys map))]
-       (drop-down {:id "RT"} "RT" 
-                  (cons nil options) 
-                  (:RT req-map)))]
+       (drop-down {:id RT} RT 
+                  (cons nil (sort options)) 
+                  (:RT req-map))) "   *"]
     [:div#list-div (bullets req-map map)]))
 
 
@@ -163,7 +170,6 @@
       (create-schema req-map) 
       (create-reset-btn)
       (create-run-btn))]
-   ;(println req-map)
    (when-not (utils/if-nil-or-empty req-map)
      (action/create-query-seqs req-map)
      [:div {:id "result" :class "res-div"} 

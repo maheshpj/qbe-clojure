@@ -1,4 +1,15 @@
-(ns utils)
+(ns utils
+  (:require [clojure.string :only (trim upper-case replace) :as st]))
+
+(def prf "rp_")
+(def CLM "CLM")
+(def TXT "TXT")
+(def ORD "ORD")
+(def DIV "DIV")
+(def HDN "HDN")
+(def RT "RT")
+
+(def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])
 
 (defn
   convert-form-string-to-map
@@ -18,3 +29,9 @@
   (or 
     (nil? any) 
     (empty? any)))
+
+
+(defn
+  val-up
+  [vl]
+  (st/upper-case (st/trim vl)))

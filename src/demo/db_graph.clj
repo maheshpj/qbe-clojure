@@ -19,8 +19,6 @@
 
 (def sel-tables)
 (def table-pk)
-;(def table-pk {:AMS_WF_STATE_SMY "REFERENCE_ID", :AMS_ASSET "ASSET_ID", :AMS_PROGRAM "P_REFERENCE_ID", :AMS_ACCOUNT "A_REFERENCE_ID"})
-;(def sel-tables #{"AMS_ASSET" "AMS_WF_STATE_SMY" "AMS_PROGRAM" "AMS_ACCOUNT"})
 
 (defn 
   selected-tables
@@ -91,13 +89,17 @@
        (table-pk (second (first fk-edge)))))
 
 (defn
+  left-otr-join
+  [i rt-bool flst]
+  (str " LEFT OUTER JOIN "  (name i) " ON " 
+       (create-on-joins 
+         (if rt-bool (get-edge owdg i flst)
+           (get-edge owdg flst i)))))
+
+(defn
   create-onjoins
   [lst rt-bool]
-  (st/join 
-    (map #(str " LEFT OUTER JOIN "  (name %) " ON " 
-               (create-on-joins (if rt-bool (get-edge owdg % (first lst))
-                                  (get-edge owdg (first lst) %))))
-         (second lst))))
+  (st/join (map #(left-otr-join % rt-bool (first lst)) (second lst))))
 
 (defn
   process-root-join
@@ -111,10 +113,9 @@
 
 (defn
   create-join
-  ([] (create-join :AMS_ASSET nil table-pk))
-  ([root op tbpk]  
-    (def sel-tables (selected-tables op)) ;(println "sel-tables are " sel-tables)
-    (def table-pk tbpk) ;(println "table-pk are " table-pk)
-    (let [join-tree (get-join-tree root)]
-      (str (process-root-join (reverse (into () (first join-tree))))    
-           (process-rest-join (into {} (rest join-tree)))))))
+  [root op tbpk]  
+  (def sel-tables (selected-tables op)) ;(println "sel-tables are " sel-tables)
+  (def table-pk tbpk) ;(println "table-pk are " table-pk)
+  (let [join-tree (get-join-tree root)]
+    (str (process-root-join (reverse (into () (first join-tree))))    
+         (process-rest-join (into {} (rest join-tree))))))

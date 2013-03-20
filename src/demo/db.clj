@@ -1,7 +1,7 @@
 (ns demo.db
-  (:use [demo.db-config])
+  (:use [demo.db-config]
+        [utils])
   (:require [clojure.java.jdbc :as jdbc]
-            [utils]
             [clojure.string :only (trim upper-case replace) :as st]
             [demo.db-graph :as onjoin]))
 
@@ -20,10 +20,11 @@
 (def like " LIKE ")
 (def uppercase " UPPER")
 (def isnull " IS NULL ")
+(def isnotnull " IS NOT NULL ")
 (def null-list (list isnull "NULL" "ISNULL" "NIL" "ISNIL"))
+(def not-null-list (list isnotnull "NOTNULL" "NOT NULL" "NOT NIL" "IS NOT NIL"))
 (def number-clm-types (list "numeric" "int" "int4" "number" "integer" "bigint" "smallint"))
 (def number-symbols (list ">" "<" "=" ">=" "<=" "between" "and" "or" "!=" "<>"))
-(def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])
 
 (defn
   is-db-type-ora
@@ -59,19 +60,9 @@
      (db-attr :pwd)))
 
 (defn
-  val-up
-  [vl]
-  (st/upper-case (st/trim vl)))
-
-(defn
   clm-up
   [vl]
   (str uppercase "(" (st/trim vl) ")"))
-
-(defn
-  check-is-null
-  [vl coll]
-  (not-any? #(= (val-up (val vl)) (st/trim %)) coll))
 
 (defn
   get-clm-type-name
@@ -84,7 +75,6 @@
 (defn
   cr-alpha-numeric
   [i]
-  (println "(integer? (val i) " (.valueOf (val i)))
   (let [keystr (name (key i))
         t-c  (st/split keystr #"\.")
         typename (get-clm-type-name t-c)]
@@ -97,23 +87,34 @@
           (str keystr (val i)))))))
 
 (defn
+  check-is-null
+  [vl coll]
+  (some #(= (val-up (st/trim vl)) (st/trim %)) coll))
+
+(defn 
+  process-cr
+  [i]
+  ;(println "i: " i)
+  (let [kee (name (key i))
+        vl (val i)]
+    (if (check-is-null vl null-list) 
+      (str kee isnull)
+      (if (check-is-null vl not-null-list)
+        (str kee isnotnull)
+        (cr-alpha-numeric i)))))
+
+(defn
   create-coll
   [criteria]
-  ;(println criteria)
-  (map 
-    (fn [i] (if-not (check-is-null i null-list) 
-       (str (name (key i)) isnull)
-       (cr-alpha-numeric i))) 
-    criteria))
+  (println criteria)
+  (map (fn [i] (process-cr i)) criteria))
 
 (defmacro
   cl
   [clause str coll]
   `(when-not (utils/if-nil-or-empty ~coll)
      (str blank ~clause blank
-          (reduce 
-            #(str %1 ~str %2) 
-            ~coll))))
+          (reduce #(str %1 ~str %2) ~coll))))
 
 (defn
   select-clause
@@ -172,46 +173,41 @@
   get-tables
   "Get all Tables from database"
   [schm prefix]
-  (get-sql-metadata 
-    (dbs) 
-    .getTables 
-    nil schm (str prefix "%") (into-array ["TABLE"]))) ; "VIEW"
+  (get-sql-metadata (dbs) 
+                    .getTables 
+                    nil schm (str prefix "%") (into-array ["TABLE"]))) ; "VIEW"
 
 (defn
   get-columns
   "Get all columns from database"
   [schm prefix]
-  (get-sql-metadata 
-    (dbs) 
-    .getColumns 
-    nil schm (str prefix "%") nil))
+  (get-sql-metadata (dbs) 
+                    .getColumns 
+                    nil schm (str prefix "%") nil))
 
 (defn
   get-relationship
   "Get columns relationship as PK and FK"
   [schm parent-table foreign-table]
-  (get-sql-metadata 
-    (dbs) 
-    .getCrossReference
-    nil schm parent-table nil schm foreign-table))
+  (get-sql-metadata (dbs) 
+                    .getCrossReference
+                    nil schm parent-table nil schm foreign-table))
 
 (defn
   get-table-fk
   "Get FK column(s) of a table"
   [schm table]
-  (get-sql-metadata 
-    (dbs) 
-    .getExportedKeys
-    nil schm table))
+  (get-sql-metadata (dbs) 
+                    .getExportedKeys
+                    nil schm table))
 
 (defn
   get-table-pk
   "Get PK column(s) of a table"
   [schm table]
-  (get-sql-metadata 
-    (dbs) 
-    .getPrimaryKeys
-    nil schm table))
+  (get-sql-metadata (dbs) 
+                    .getPrimaryKeys
+                    nil schm table))
 
 (defn
   table-pk-map
@@ -226,9 +222,8 @@
   "Get Table and columns as map"
   [schm prefix]
   (into {}
-        (group-by 
-          :table_name 
-          (get-columns schm prefix))))
+        (group-by :table_name 
+                  (get-columns schm prefix))))
 
 (defn
   execute-query
@@ -236,9 +231,7 @@
   (jdbc/with-connection (dbs)
     (jdbc/transaction 
       (jdbc/with-query-results 
-        res 
-        [query-str]
-        (doall res)))))
+        res [query-str] (doall res)))))
 
 (defn
   fetch-schema-from-db

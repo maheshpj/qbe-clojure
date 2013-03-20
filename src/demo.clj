@@ -2,7 +2,8 @@
       :doc "Compojure app for demo."}
   demo
   (:use [compojure.core :only (defroutes)]
-        [ring.adapter.jetty :only (run-jetty)])
+        [ring.adapter.jetty :only (run-jetty)]
+        [hiccup.middleware :only (wrap-base-url)])
   (:require [controller.demo :as cntr]
             [compojure.route :as route]))
 
@@ -16,7 +17,9 @@
   (route/files "/" {:root "public"})
   (route/not-found "<h1>Oooopsss ... Page not found :( </h1>"))
 
-(def application routes)
+(def application 
+  (-> routes
+    (wrap-base-url)))
 
 (defn 
   -main 

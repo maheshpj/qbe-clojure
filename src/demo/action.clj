@@ -1,4 +1,5 @@
 (ns demo.action
+  (:use [utils])
   (:require [demo.db :as db]
             [clojure.string :only (capitalize replace-first upper-case) :as st]))
 
@@ -35,10 +36,10 @@
 (defn
   create-query-seqs
   [req-map]
-  (def op (filter-list-by-prefix "CLM" req-map))
-  (def cr (filter-map-by-prefix "TXT" req-map))
-  (def ord (filter-list-by-prefix "ORD" req-map))
-  (def rt (:RT req-map)))
+  (def op (filter-list-by-prefix CLM req-map))
+  (def cr (filter-map-by-prefix TXT req-map))
+  (def ord (filter-list-by-prefix ORD req-map))
+  (def rt ((keyword RT) req-map)))
 
 (defn
   get-result
@@ -63,6 +64,4 @@
 (defn
   get-header-clms
   []
-  (if (db/is-db-type-ora)
-    (create-headers "AMS_" "" op)
-    (create-headers "RP_" "" op)))
+  (create-headers (val-up prf) "" op))
