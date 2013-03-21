@@ -134,7 +134,7 @@
      (let [options (map #(upper-case (replace-first  % prf "")) (keys map))]
        (drop-down {:id RT} RT 
                   (cons nil (sort options)) 
-                  (:RT req-map))) "   *"]
+                  (:RT req-map))) [:font {:class "required"} "    *"]]
     [:div#list-div (bullets req-map map)]))
 
 

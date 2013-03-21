@@ -70,21 +70,33 @@
   (:type_name 
     (first 
       (filter (fn [mp] (= (mp :column_name) (second t-c))) 
-              (-> (first t-c) cached-schema)))) )
+              (-> (first t-c) cached-schema)))))
+
+(defn
+  process-number
+  [keystr valstr]
+  (if (some #(.startsWith valstr %) number-symbols)
+    (str keystr valstr)
+    (try
+      (if (number? (Integer. valstr))
+        (str keystr " = " valstr))
+      (catch NumberFormatException _ (str keystr " = -1")))))
+
+(defn
+  process-string
+  [keystr valstr]
+  (str (clm-up keystr) like "'%" (val-up valstr) "%' "))
 
 (defn
   cr-alpha-numeric
   [i]
   (let [keystr (name (key i))
+        valstr (val i)
         t-c  (st/split keystr #"\.")
         typename (get-clm-type-name t-c)]
-    (if (not-any? (fn [i] (= i typename)) number-clm-types)
-      (str (clm-up keystr) like "'%" (val-up (val i)) "%' ")
-      (if (number? (val i))
-        (str keystr " = " (val i))
-        (if (not-any? #(.startsWith (val i) %) number-symbols)
-          (str keystr " = -1")
-          (str keystr (val i)))))))
+    (if (some (fn [i] (= i typename)) number-clm-types)
+      (process-number keystr valstr)
+      (process-string keystr valstr))))
 
 (defn
   check-is-null

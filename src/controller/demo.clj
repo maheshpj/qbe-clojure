@@ -1,13 +1,13 @@
 (ns controller.demo
   (:use [compojure.core :only (defroutes GET POST PUT)]
-        [ring.adapter.jetty :only (run-jetty)]
         [hiccup.page :only (html5 include-css include-js)]
-        [hiccup.util :only (escape-html )])
+        [hiccup.util :only (escape-html)]
+        [utils]
+        [clojure.walk])
   (:require [compojure.route :as route]
-            [compojure.handler :as handler]
             [ring.util.response :as ring]
             [views.index :as idx]
-            [utils]))
+            [clojure.string :only (blank?) :as st]))
 
 (defn 
   index
@@ -29,12 +29,11 @@
   run
   [req]
   ;(println req)
-  (if-not (utils/if-nil-or-empty req)
-    (index (utils/convert-form-string-to-map
-             (slurp (req :body))))
+  (if-not (if-nil-or-empty req)
+    (index  (into {} (filter #(not (st/blank? (val %))) (keywordize-keys req))))
     (ring/redirect "/")))
 
 (defroutes 
   routes
   (GET "/" [] (index))
-  (POST "/run" request (run request)))
+  (POST "/run" request (run (:form-params request))))

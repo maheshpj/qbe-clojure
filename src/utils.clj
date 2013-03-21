@@ -1,5 +1,5 @@
 (ns utils
-  (:require [clojure.string :only (trim upper-case replace) :as st]))
+  (:require [clojure.string :only (trim upper-case replace blank?) :as st]))
 
 (def prf "rp_")
 (def CLM "CLM")

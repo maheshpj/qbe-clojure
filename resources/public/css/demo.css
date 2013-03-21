@@ -51,6 +51,10 @@ table tbody tr {
 	background: -moz-linear-gradient(top, #ffffff, #dddddd);	
 	}
 	
+.required {
+	color: red;
+	}
+		
 .schema-div {
 	float: left; 
 	width: 25%;
