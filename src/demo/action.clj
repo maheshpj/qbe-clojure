@@ -52,6 +52,7 @@
   []
   (db/fetch-db-table-columns-map)
   (db/get-pk-ralation db/cached-schema)
+  (db/create-db-graph)
   db/cached-schema)
 
 (defn

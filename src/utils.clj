@@ -10,6 +10,7 @@
 (def RT "RT")
 
 (def proj_selected_tables ["ams_asset" "ams_program" "ams_wf_state_smy" "ams_account"])
+(def db-grph-keys [:fkcolumn_name :pktable_name :fktable_name])
 
 (defn
   convert-form-string-to-map

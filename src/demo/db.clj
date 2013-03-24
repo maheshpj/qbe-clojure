@@ -7,6 +7,7 @@
 
 (def cached-schema nil)
 (def table-pk nil)
+(def db-grph nil)
 (def ^:dynamic *SELECT* "SELECT")
 (def ^:dynamic *FROM* "FROM")
 (def ^:dynamic *WHERE* "WHERE")
@@ -24,7 +25,7 @@
 (def null-list (list isnull "NULL" "ISNULL" "NIL" "ISNIL"))
 (def not-null-list (list isnotnull "NOTNULL" "NOT NULL" "NOT NIL" "IS NOT NIL"))
 (def number-clm-types (list "numeric" "int" "int4" "number" "integer" "bigint" "smallint"))
-(def number-symbols (list ">" "<" "=" ">=" "<=" "between" "and" "or" "!=" "<>"))
+(def number-symbols (list ">" "<" "=" ">=" "<=" "!=" "<>"))
 
 (defn
   is-db-type-ora
@@ -155,7 +156,7 @@
   (str 
     (select-clause output)
     (from-clause root)
-    (onjoin/create-join (keyword root) output table-pk)
+    (onjoin/create-join db-grph (keyword root) output table-pk (is-db-type-ora))
     (where-clause criteria)
     (orderby-clause orderby)))
 
@@ -279,6 +280,41 @@
   [schm]
   (when (nil? table-pk)
     (def table-pk (create-pk-ralation schm))))
+
+(defn 
+  get-tbl-graph2 
+  [] 
+  (vals 
+    (select-keys (into {} (get-table-fk (db-attr :schema) "rp_user")) 
+                 db-grph-keys)))
+
+(defn 
+  get-tbl-graph 
+  [] 
+  (map #(vals (select-keys % db-grph-keys)) (get-table-fk (db-attr :schema) "rp_user")))
+
+(defn 
+  get-db-graph2
+  []
+  (let [dbgrp (get-tbl-graph)]
+    (vec (reverse (merge (reverse (map #(keyword %) (butlast dbgrp))) (last dbgrp))))))
+
+(defn
+  edge
+  [coln]
+  (map #(keyword %) coln))
+
+;;work
+(defn 
+  get-db-graph
+  []
+  (let [dbgrp (get-tbl-graph)]
+    (map #(vec (reverse (merge (reverse (edge (butlast %))) (last %)))) dbgrp)))
+
+(defn
+  create-db-graph
+  []
+  (def db-grph (get-db-graph)))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 

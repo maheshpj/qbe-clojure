@@ -3,7 +3,7 @@
         [loom.alg])
   (:require [clojure.string :only (join) :as st]))
 
-(def wdg (weighted-digraph 
+(def owdg (weighted-digraph 
            [:AMS_PGM_ASSET_ALIGNMENT :AMS_ASSET "ASSET_ID"] 
            [:AMS_PGM_ASSET_ALIGNMENT :AMS_PROGRAM "PROGRAM_REF_ID"] 
            [:AMS_WF_STATE_SMY :AMS_ASSET "ASSET_ID"] 
@@ -12,8 +12,7 @@
            [:AMS_PGM_HCHY :AMS_PROGRAM "RELATION_ID"] 
            [:AMS_ASSESSMENT_ITEM :AMS_ASSET "ASSET_ID"]))
 
-(def owdg (weighted-digraph 
-            [:rp_authors :rp_user "user_id"]))
+;(def owdg (weighted-digraph [:rp_authors :rp_user "user_id"]))
 
 (def g (graph owdg))
 
@@ -113,9 +112,11 @@
 
 (defn
   create-join
-  [root op tbpk]  
-  (def sel-tables (selected-tables op)) ;(println "sel-tables are " sel-tables)
-  (def table-pk tbpk) ;(println "table-pk are " table-pk)
+  [db-grph root op tbpk bool]  
+  (when-not bool (def owdg (weighted-digraph db-grph))) 
+  (def g (graph owdg))
+  (def sel-tables (selected-tables op)) 
+  (def table-pk tbpk) 
   (let [join-tree (get-join-tree root)]
     (str (process-root-join (reverse (into () (first join-tree))))    
          (process-rest-join (into {} (rest join-tree))))))

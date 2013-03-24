@@ -19,9 +19,9 @@
   [clm-names-vec data-map]
   [:table 
    [:thead
-    [:tr (utils/map-tag :th nil (header-name clm-names-vec))]]
+    [:tr (map-tag :th nil (header-name clm-names-vec))]]
    [:tbody
-    (for [x data-map] [:tr (utils/map-tag :td nil x)])]])
+    (for [x data-map] [:tr (map-tag :td nil x)])]])
 
 (defn
   create-id
@@ -66,23 +66,6 @@
                clmname ((keyword clmname) req-map))))
 
 (defn
-  bullets2
-  "Create left side panel of Table - column tree"
-  [req-map map]
-  [:ul
-   (for [x (sort (keys map))]
-     [:li 
-      (upper-case (replace-first x prf ""))
-      [:ul 
-       (for [y (get map x)]
-         [:li 
-          (clm-checkbox x y req-map)
-          (upper-case (:column_name y))
-          [:br]
-          (clm-options x y req-map)])
-       [:br]]])])
-
-(defn
   tr-class
   [x req-map]
   (let [val ((keyword (create-id HDN x nil)) req-map)]
@@ -109,7 +92,7 @@
   "Create left side panel of Table - column tree"
   [req-map map]
   [:ul {:class "open"}
-   (for [x (keys map)]
+   (for [x (sort (keys map))]
      [:li (link-to {:style "text-decoration: none;" :id (str "img_" x) 
                     :border "0" :onclick (str "toggle('" x "');")} "#" "+ ")
       (upper-case (replace-first x prf ""))
@@ -146,9 +129,7 @@
 (defn 
   create-result-table
   [req-map]
-  (create-grid "Result" (reverse (action/get-header-clms))
-               (let [result (action/get-result)]
-                 result)))
+  (create-grid "Result" (reverse (action/get-header-clms)) (action/get-result)))
 
 (defn
   create-run-btn
@@ -170,9 +151,9 @@
       (create-schema req-map) 
       (create-reset-btn)
       (create-run-btn))]
-   (when-not (utils/if-nil-or-empty req-map)
+   (when-not (if-nil-or-empty req-map)
      (action/create-query-seqs req-map)
      [:div {:id "result" :class "res-div"} 
-      (if (utils/if-nil-or-empty action/rt)
+      (if (if-nil-or-empty action/rt)
         (label {:class "err-msg"} "errMsg" root-err)
         (create-result-table req-map))])])
