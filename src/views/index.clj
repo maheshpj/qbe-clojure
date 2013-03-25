@@ -88,6 +88,11 @@
     (hidden-field  {:id hdnf} hdnf (tr-class x req-map))))
 
 (defn
+  tblname-no-prf
+  [i]
+  (upper-case (replace-first i prf "")))
+
+(defn
   bullets
   "Create left side panel of Table - column tree"
   [req-map map]
@@ -95,7 +100,7 @@
    (for [x (sort (keys map))]
      [:li (link-to {:style "text-decoration: none;" :id (str "img_" x) 
                     :border "0" :onclick (str "toggle('" x "');")} "#" "+ ")
-      (upper-case (replace-first x prf ""))
+      (tblname-no-prf x)
       (hdn-field x req-map)
       [:ul {:class (tr-class x req-map) :id (str "ul_" x)}
        (get-branch req-map map x)
@@ -107,17 +112,20 @@
   (list [:h2 caption]
         [:div {:class "grid-div"} (grid clm-names-vec data-map)]))
 
+(defn
+  get-options
+  [mp]
+  (map #(tblname-no-prf %) (keys mp)))
 
 (defn
   create-list
   [req-map caption map]
   (list    
     [:h2 caption]
-    [:div#root-div "Root:  "
-     (let [options (map #(upper-case (replace-first  % prf "")) (keys map))]
-       (drop-down {:id RT} RT 
-                  (cons nil (sort options)) 
-                  (:RT req-map))) [:font {:class "required"} "    *"]]
+    [:div#root-div "Report for:  "
+     (drop-down {:id RT} RT 
+                (cons nil (sort (get-options map))) 
+                (:RT req-map)) [:font {:class "required"} "    *"]]
     [:div#list-div (bullets req-map map)]))
 
 

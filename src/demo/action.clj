@@ -39,7 +39,7 @@
   (def op (filter-list-by-prefix CLM req-map))
   (def cr (filter-map-by-prefix TXT req-map))
   (def ord (filter-list-by-prefix ORD req-map))
-  (def rt ((keyword RT) req-map)))
+  (def rt (str prf (st/lower-case ((keyword RT) req-map)))))
 
 (defn
   get-result

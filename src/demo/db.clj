@@ -107,7 +107,6 @@
 (defn 
   process-cr
   [i]
-  ;(println "i: " i)
   (let [kee (name (key i))
         vl (val i)]
     (if (check-is-null vl null-list) 
@@ -156,7 +155,7 @@
   (str 
     (select-clause output)
     (from-clause root)
-    (onjoin/create-join db-grph (keyword root) output table-pk (is-db-type-ora))
+    (onjoin/create-join db-grph (keyword root) output table-pk)
     (where-clause criteria)
     (orderby-clause orderby)))
 
@@ -234,9 +233,7 @@
   fetch-table-columns-map
   "Get Table and columns as map"
   [schm prefix]
-  (into {}
-        (group-by :table_name 
-                  (get-columns schm prefix))))
+  (into {} (group-by :table_name (get-columns schm prefix))))
 
 (defn
   execute-query
@@ -281,30 +278,23 @@
   (when (nil? table-pk)
     (def table-pk (create-pk-ralation schm))))
 
-(defn 
-  get-tbl-graph2 
-  [] 
-  (vals 
-    (select-keys (into {} (get-table-fk (db-attr :schema) "rp_user")) 
-                 db-grph-keys)))
+;;;;;;;;;;;;;;;;;;;;;;;;;  DB TABLE GRAPH  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn
+  all-table-fk
+  []
+  (map #(into {} (get-table-fk (db-attr :schema) %)) (keys cached-schema)))
 
 (defn 
   get-tbl-graph 
   [] 
-  (map #(vals (select-keys % db-grph-keys)) (get-table-fk (db-attr :schema) "AMS_ASSET")))
-
-(defn 
-  get-db-graph2
-  []
-  (let [dbgrp (get-tbl-graph)]
-    (vec (reverse (merge (reverse (map #(keyword %) (butlast dbgrp))) (last dbgrp))))))
+  (map #(vals (select-keys % db-grph-keys)) (filter not-empty (all-table-fk))))
 
 (defn
   edge
   [coln]
   (map #(keyword %) coln))
 
-;;work
 (defn 
   get-db-graph
   []
@@ -314,7 +304,8 @@
 (defn
   create-db-graph
   []
-  (def db-grph (get-db-graph)))
+  (when (nil? db-grph)
+    (def db-grph (get-db-graph))))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 
