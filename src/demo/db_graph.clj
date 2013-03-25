@@ -113,7 +113,7 @@
 (defn
   create-join
   [db-grph root op tbpk bool]  
-  (when-not bool (def owdg (weighted-digraph db-grph))) 
+  (when-not bool (def owdg (apply weighted-digraph db-grph))) 
   (def g (graph owdg))
   (def sel-tables (selected-tables op)) 
   (def table-pk tbpk) 
