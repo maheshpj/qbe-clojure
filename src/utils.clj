@@ -1,7 +1,7 @@
 (ns utils
   (:require [clojure.string :only (trim upper-case replace blank?) :as st]))
 
-(def prf "rp_")
+(def prf "AMS_")
 (def CLM "CLM")
 (def TXT "TXT")
 (def ORD "ORD")

@@ -24,7 +24,7 @@
 (def isnotnull " IS NOT NULL ")
 (def null-list (list isnull "NULL" "ISNULL" "NIL" "ISNIL"))
 (def not-null-list (list isnotnull "NOTNULL" "NOT NULL" "NOT NIL" "IS NOT NIL"))
-(def number-clm-types (list "numeric" "int" "int4" "number" "integer" "bigint" "smallint"))
+(def number-clm-types (list "numeric" "int" "int4" "NUMBER" "integer" "bigint" "smallint"))
 (def number-symbols (list ">" "<" "=" ">=" "<=" "!=" "<>"))
 
 (defn
@@ -291,7 +291,7 @@
 (defn 
   get-tbl-graph 
   [] 
-  (map #(vals (select-keys % db-grph-keys)) (get-table-fk (db-attr :schema) "rp_user")))
+  (map #(vals (select-keys % db-grph-keys)) (get-table-fk (db-attr :schema) "AMS_ASSET")))
 
 (defn 
   get-db-graph2
