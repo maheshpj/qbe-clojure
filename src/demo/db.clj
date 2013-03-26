@@ -244,7 +244,7 @@
         res [query-str] (doall res)))))
 
 (defn
-  fetch-schema-from-db
+  fetch-schema-from-db2
   []
   (println "Getting DB Schema...")
   (if (is-db-type-ora)
@@ -256,6 +256,14 @@
       (fetch-table-columns-map 
         (db-attr :schema) 
         (db-attr :table_prefix))))
+
+(defn
+  fetch-schema-from-db
+  []
+  (println "Getting DB Schema...")
+  (fetch-table-columns-map 
+    (db-attr :schema) 
+    (db-attr :table_prefix)))
 
 (defn 
   fetch-db-table-columns-map
@@ -298,8 +306,10 @@
 (defn 
   get-db-graph
   []
+  (println "Creating DB Tables Graph...")
   (let [dbgrp (get-tbl-graph)]
-    (map #(vec (reverse (merge (reverse (edge (butlast %))) (last %)))) dbgrp)))
+    (map #(vec (reverse (merge (reverse (edge (butlast %))) (last %)))) dbgrp))
+  (print "Done."))
 
 (defn
   create-db-graph
