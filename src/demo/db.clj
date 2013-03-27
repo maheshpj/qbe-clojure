@@ -16,7 +16,7 @@
 (def ^:dynamic *JOIN-ON* "ON")
 (def blank " ")
 (def comma ", ")
-(def -and " and ")
+(def -and " AND ")
 (def eqto " = ")
 (def like " LIKE ")
 (def uppercase " UPPER")
@@ -74,19 +74,39 @@
               (-> (first t-c) cached-schema)))))
 
 (defn
+  single-crit-num
+  [keystr valstr]
+  (if (some #(.startsWith (st/trim valstr) %) number-symbols)
+    (str keystr valstr)
+    (if (number? (Integer. valstr)) (str keystr " = " valstr))))
+
+
+(defn
+  split-num-and-vals
+  [keystr valstr]
+  (let [vls (st/split (st/upper-case valstr) #"AND")]
+    (map #(single-crit-num keystr %) vls)))
+
+(defn
   process-number
   [keystr valstr]
-  (if (some #(.startsWith valstr %) number-symbols)
-    (str keystr valstr)
-    (try
-      (if (number? (Integer. valstr))
-        (str keystr " = " valstr))
-      (catch NumberFormatException _ (str keystr " = -1")))))
+  (apply str (interpose -and (split-num-and-vals keystr valstr))))
+
+(defn
+  single-crit-string
+  [keystr valstr]
+  (str (clm-up keystr) like "'%" (val-up valstr) "%' "))
+
+(defn
+  split-and-vals
+  [keystr valstr]
+  (let [vls (st/split (st/upper-case valstr) #"AND")]
+    (map #(single-crit-string keystr %) vls)))
 
 (defn
   process-string
   [keystr valstr]
-  (str (clm-up keystr) like "'%" (val-up valstr) "%' "))
+  (apply str (interpose -and (split-and-vals keystr valstr))))
 
 (defn
   cr-alpha-numeric
@@ -273,6 +293,11 @@
   cached-schema)
 
 (defn
+  set-util-prf
+  []
+  (set-prf (str (db-attr :table_prefix) "_")))
+
+(defn
   create-pk-ralation
   [schm]
   (println "Creating PK Realations...")
@@ -308,8 +333,7 @@
   []
   (println "Creating DB Tables Graph...")
   (let [dbgrp (get-tbl-graph)]
-    (map #(vec (reverse (merge (reverse (edge (butlast %))) (last %)))) dbgrp))
-  (print "Done."))
+    (map #(vec (reverse (merge (reverse (edge (butlast %))) (last %)))) dbgrp)))
 
 (defn
   create-db-graph

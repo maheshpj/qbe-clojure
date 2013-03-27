@@ -7,6 +7,7 @@
 (def cr)
 (def rt)
 (def ord)
+(def err "Invalid Criteria")
 
 (defn
   filter-req
@@ -39,7 +40,6 @@
   (def op (filter-list-by-prefix CLM req-map))
   (def cr (filter-map-by-prefix TXT req-map))
   (def ord (filter-list-by-prefix ORD req-map))
-  ;(def rt (str prf (st/lower-case ((keyword RT) req-map))))
   (def rt (first (filter #(= (st/upper-case (str prf ((keyword RT) req-map))) 
                              (st/upper-case %)) (keys db/cached-schema)))))
 
@@ -48,11 +48,14 @@
   get-result
   []
   (when-not (utils/if-nil-or-empty op)
-      (db/execute-query (db/create-query-str op cr rt ord))))
+      (try
+        (db/execute-query (db/create-query-str op cr rt ord))
+        (catch Exception _ {:Error err}))))
 
 (defn
   get-schema
   []
+  (db/set-util-prf)
   (db/fetch-db-table-columns-map)
   (db/get-pk-ralation db/cached-schema)
   (db/create-db-graph)

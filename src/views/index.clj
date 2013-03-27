@@ -15,13 +15,18 @@
   (map #(replace-first % "." " ") vect))
 
 (defn
+  cell-style
+  [x]
+  (str "color: " (if (map? x) "grey" "red")))
+
+(defn
   grid
   [clm-names-vec data-map]
   [:table 
    [:thead
     [:tr (map-tag :th nil (header-name clm-names-vec))]]
    [:tbody
-    (for [x data-map] [:tr (map-tag :td nil x)])]])
+    (for [x data-map] [:tr (map-tag :td {:style (cell-style x)} x)])]])
 
 (defn
   create-id
@@ -137,7 +142,10 @@
 (defn 
   create-result-table
   [req-map]
-  (create-grid "Result" (reverse (action/get-header-clms)) (action/get-result)))
+  (let [res (action/get-result)]
+    (if (:Error res)
+      (create-grid "Result" nil res)
+      (create-grid "Result" (reverse (action/get-header-clms)) res))))
 
 (defn
   create-run-btn

@@ -1,7 +1,7 @@
 (ns utils
   (:require [clojure.string :only (trim upper-case replace blank?) :as st]))
 
-(def prf "AMS_")
+(def prf)
 (def CLM "CLM")
 (def TXT "TXT")
 (def ORD "ORD")
@@ -27,12 +27,15 @@
 (defn
   if-nil-or-empty
   [any]
-  (or 
-    (nil? any) 
-    (empty? any)))
+  (or (nil? any) (empty? any)))
 
 
 (defn
   val-up
   [vl]
   (st/upper-case (st/trim vl)))
+
+(defn
+  set-prf
+  [pprf]
+  (def prf pprf))
