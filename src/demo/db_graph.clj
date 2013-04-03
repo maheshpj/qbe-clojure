@@ -15,12 +15,17 @@
   (into #{} (map (fn [i] (first (st/split i #"\."))) col)))
 
 (defn
-  root-short-path
+  root-short-path2
   [root end]
   (let [asoc-tbl (keys (filter (fn [i] (= (val i) (hash-set root end))) (:adj g)))]
     (if (if-nil-or-empty asoc-tbl)
       (shortest-path g (keyword root) (keyword end))
       asoc-tbl)))
+
+(defn
+  root-short-path
+  [root end]
+  (shortest-path g (keyword root) (keyword end)))
 
 (defn
   rem-root-from-sel-tables
@@ -51,28 +56,16 @@
                (map (fn [end] (root-short-path root end)) 
                     (rem-root-from-sel-tables root)))))
 
-(defn 
-  get-join-tree
-  [root distinct-nodes] 
-  (let [span (select-keys (bf-span g root) distinct-nodes)]
-    (into {}
-          (filter (fn [maap] (not (empty? (val maap))))
-                  (zipmap (keys span) 
-                          (map (fn [node] (filter-nodes node distinct-nodes)) (vals span)))))))
-
-(defn
-  traverse
-  [root distinct-nodes]
-  (filter (fn [i] (some #(= i %) distinct-nodes)) (bf-traverse g root)))
-
 (defn
   joins
   "Get a Map of spanning tree which includes all 'join' nodes"
   [root]
-  (let [distinct-nodes (get-distinct-nodes root)]
+  (let [distinct-nodes (get-distinct-nodes root)
+        sub-graph (subgraph g distinct-nodes)]
     (into {} 
-          (reverse (select-keys  (get-join-tree root distinct-nodes) 
-                                 (traverse root distinct-nodes))))))
+          (reverse (select-keys (bf-span sub-graph root)
+                                (bf-traverse sub-graph root))))))
+
 
 ;;;; may need to change
 (defn
@@ -133,7 +126,7 @@
   (def owdg (apply weighted-digraph ams-graph))
   (def g (graph owdg))
   (def sel-tables  (list :AMS_ASSET :AMS_PROGRAM :AMS_WF_STATE_SMY :AMS_ACCOUNT)) 
-  ;(def table-pk {}) 
+  (def table-pk {}) 
   (let [join-tree (joins root)]
     (str (process-root-join (reverse (into () (first join-tree))))    
          (process-rest-join (into {} (rest join-tree))))))
