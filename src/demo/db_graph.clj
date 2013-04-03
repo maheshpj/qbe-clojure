@@ -4,7 +4,8 @@
         [utils])
   (:require [clojure.string :only (join) :as st]))
 
-(def g (graph owdg))
+(def owdg)
+(def g)
 (def sel-tables)
 (def table-pk)
 
@@ -119,7 +120,8 @@
   [db-grph root op tbpk]  
   (def owdg (apply weighted-digraph db-grph))
   (def g (graph owdg))
-  (def sel-tables (selected-tables op)) 
+  (def sel-tables (selected-tables op));(map keyword (selected-tables op))) 
+  ;(println sel-tables)
   (def table-pk tbpk) 
   (let [join-tree (joins root)]
     (str (process-root-join (reverse (into () (first join-tree))))    
@@ -130,8 +132,8 @@
   [root]  
   (def owdg (apply weighted-digraph ams-graph))
   (def g (graph owdg))
-  ;(def sel-tables (selected-tables op)) 
-  (def table-pk {}) 
+  (def sel-tables  (list :AMS_ASSET :AMS_PROGRAM :AMS_WF_STATE_SMY :AMS_ACCOUNT)) 
+  ;(def table-pk {}) 
   (let [join-tree (joins root)]
     (str (process-root-join (reverse (into () (first join-tree))))    
          (process-rest-join (into {} (rest join-tree))))))
