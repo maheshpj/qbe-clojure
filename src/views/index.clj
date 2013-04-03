@@ -6,7 +6,7 @@
         [utils])
   (:require [demo.action :as action]))
 
-(def root-err "Please select a Root")
+(def root-err "Please select a 'Report for' value")
 (def form-enctype "application/x-www-form-urlencoded")
 
 (defn
@@ -114,8 +114,9 @@
 (defn
   create-grid
   [caption clm-names-vec data-map]
-  (list [:h2 caption]
-        [:div {:class "grid-div"} (grid clm-names-vec data-map)]))
+  (list ;[:h2 caption]
+        [:div {:class "grid-div"} (grid clm-names-vec data-map)]
+        (label {:style "float:right;"} nil (str "No of records:" " " (count data-map)))))
 
 (defn
   get-options
@@ -126,7 +127,7 @@
   create-list
   [req-map caption map]
   (list    
-    [:h2 caption]
+    ;[:h2 caption]
     [:div#root-div "Report for:  "
      (drop-down {:id RT} RT 
                 (cons nil (sort (get-options map))) 

@@ -57,12 +57,12 @@ table tbody tr {
 		
 .schema-div {
 	float: left; 
-	width: 25%;
+	width: 27%;
 	}
 	
 .grid-div {
 	overflow-y: auto; 
-	height:530px; 
+	height:670px; 
 	border: 1px solid lightgrey;
 	}	
 	
@@ -107,7 +107,7 @@ table tbody tr {
 	
 #list-div {
 	overflow: auto; 
-	height: 500px; 
+	height: 620px; 
 	border: 1px solid lightgrey; 
 	background-color: papayawhip;
 	}	

@@ -138,7 +138,7 @@
 (defn
   create-coll
   [criteria]
-  (println criteria)
+  ;(println criteria)
   (map (fn [i] (process-cr i)) criteria))
 
 (defmacro
@@ -264,26 +264,14 @@
         res [query-str] (doall res)))))
 
 (defn
-  fetch-schema-from-db2
-  []
-  (println "Getting DB Schema...")
-  (if (is-db-type-ora)
-      (select-keys 
-        (fetch-table-columns-map 
-          (db-attr :schema) 
-          (db-attr :table_prefix))
-        (map (fn [tb] (st/upper-case tb)) proj_selected_tables))
-      (fetch-table-columns-map 
-        (db-attr :schema) 
-        (db-attr :table_prefix))))
-
-(defn
   fetch-schema-from-db
   []
   (println "Getting DB Schema...")
-  (fetch-table-columns-map 
-    (db-attr :schema) 
-    (db-attr :table_prefix)))
+  (apply dissoc 
+         (fetch-table-columns-map 
+           (db-attr :schema) 
+           (db-attr :table_prefix))
+         (vec (concat rem-views rem-metadata))))
 
 (defn 
   fetch-db-table-columns-map
@@ -339,7 +327,7 @@
   create-db-graph
   []
   (when (nil? db-grph)
-    (def db-grph (get-db-graph))))
+    (def db-grph ams-graph)));(get-db-graph))))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 
