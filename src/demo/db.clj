@@ -8,12 +8,12 @@
 (def cached-schema nil)
 (def table-pk nil)
 (def db-grph nil)
+
 (def ^:dynamic *SELECT* "SELECT")
 (def ^:dynamic *FROM* "FROM")
 (def ^:dynamic *WHERE* "WHERE")
 (def ^:dynamic *ORDER-BY* "ORDER BY")
-(def ^:dynamic *JOIN* "JOIN")
-(def ^:dynamic *JOIN-ON* "ON")
+(def ^:dynamic *GROUP-BY* "GROUP BY") 
 (def blank " ")
 (def comma ", ")
 (def -and " AND ")
@@ -60,10 +60,15 @@
      (db-attr :user) 
      (db-attr :pwd)))
 
+(defn 
+  parenthise
+  [vl]
+  (str "(" vl ")"))
+
 (defn
   clm-up
   [vl]
-  (str uppercase "(" (st/trim vl) ")"))
+  (str uppercase (parenthise (st/trim vl))))
 
 (defn
   get-clm-type-name
@@ -120,7 +125,7 @@
       (process-string keystr valstr))))
 
 (defn
-  check-is-null
+  find-in-coll
   [vl coll]
   (some #(= (val-up (st/trim vl)) (st/trim %)) coll))
 
@@ -129,16 +134,15 @@
   [i]
   (let [kee (name (key i))
         vl (val i)]
-    (if (check-is-null vl null-list) 
+    (if (find-in-coll vl null-list) 
       (str kee isnull)
-      (if (check-is-null vl not-null-list)
+      (if (find-in-coll vl not-null-list)
         (str kee isnotnull)
         (cr-alpha-numeric i)))))
 
 (defn
   create-coll
   [criteria]
-  ;(println criteria)
   (map (fn [i] (process-cr i)) criteria))
 
 (defmacro
@@ -149,9 +153,23 @@
           (reduce #(str %1 ~str %2) ~coll))))
 
 (defn
+  replace-grp-clm
+  [clm groupby]
+  (if (= clm (name (key groupby))) 
+      (st/replace clm clm (str (val groupby) (parenthise clm)))
+      clm))
+
+(defn
+  grpby-select
+  [groupby output]
+  (map #(replace-grp-clm % groupby) output))
+
+(defn
   select-clause
-  [output]
-  (cl *SELECT* comma output))
+  [output groupby]
+  (if (if-nil-or-empty groupby)
+    (cl *SELECT* comma output)
+    (cl *SELECT* comma (grpby-select groupby output))))
 
 (defn
   from-clause
@@ -169,21 +187,27 @@
   (cl *ORDER-BY* comma orderby))
 
 (defn
+  groupby-clause
+  [groupby]
+  (cl *GROUP-BY* comma groupby))
+
+(defn
   generate-query-str
   "Generates the query string from UI values"
-  [output root criteria orderby]
+  [output root criteria orderby groupby]
   (str 
-    (select-clause output)
+    (select-clause output groupby)
     (from-clause root)
     (onjoin/create-join db-grph (keyword root) output table-pk)
     (where-clause criteria)
+    (if (and (> (count output) 1) (not (if-nil-or-empty groupby)))
+      (groupby-clause (remove #(= % (name (key groupby))) output)))
     (orderby-clause orderby)))
-
 
 (defn
   create-query-str
-  [op cr rt ord]
-  (let [query (st/trim (generate-query-str op rt cr ord))]
+  [op cr rt ord grp]
+  (let [query (st/trim (generate-query-str op rt cr ord grp))]
     (println query)
     query))
 

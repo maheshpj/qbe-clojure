@@ -53,13 +53,23 @@
   (let [ordname (create-id ORD x y)]
     (check-box {:id ordname} ordname ((keyword ordname) req-map))))
 
+(defn 
+  option-grp
+  [x y req-map]
+  (let [grpname (create-id GRP x y)]
+    (drop-down {:id grpname :class "crit-txt"} 
+               grpname (cons nil group-fun) 
+               ((keyword grpname) req-map))))
+
 (defn
   clm-options
   [x y req-map]
   [:div {:id (create-id DIV x y)  
          :style (str "display:" (show-div x y req-map))}
    (option-criteria x y req-map)
-   (option-ord-by x y req-map) "^"])
+   (option-ord-by x y req-map) "^"
+   [:br]
+   (option-grp x y req-map)])
 
 (defn
   clm-checkbox
