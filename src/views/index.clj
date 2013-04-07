@@ -24,6 +24,7 @@
   [clm-names-vec data-map]
   [:table 
    [:thead
+    (println "data-map: " data-map)
     [:tr (map-tag :th nil (header-name clm-names-vec))]]
    [:tbody
     (for [x data-map] [:tr (map-tag :td {:style (cell-style x)} x)])]])
