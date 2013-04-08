@@ -113,8 +113,7 @@
   [db-grph root op tbpk]  
   (def owdg (apply weighted-digraph db-grph))
   (def g (graph owdg))
-  (def sel-tables (selected-tables op));(map keyword (selected-tables op))) 
-  ;(println sel-tables)
+  (def sel-tables (selected-tables op))
   (def table-pk tbpk) 
   (let [join-tree (joins root)]
     (str (process-root-join (reverse (into () (first join-tree))))    

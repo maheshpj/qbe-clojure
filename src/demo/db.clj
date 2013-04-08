@@ -28,20 +28,17 @@
 (def number-symbols (list ">" "<" "=" ">=" "<=" "!=" "<>"))
 
 
-(defn
-  create-metatblname
-  [mf]
-  (str (st/upper-case (str (st/replace mf " " "-") "_MDV"))))
-
 (defn 
   from-meta-tbl
   [mf]
-  (str " LEFT OUTER JOIN AMS_METADATA_VALUE " (st/replace mf ".NAME" "")))
+  (str " LEFT OUTER JOIN " (:TABLE metadata-value) 
+       (st/replace mf (str "." (:COLUMN metadata-value)) "")))
 
 (defn
   on-meta-tbl
   [mf tbclm]
-  (str " ON " (st/replace mf ".NAME" ".CODE") eqto tbclm))
+  (str " ON " (st/replace mf (str "." (:COLUMN metadata-value)) 
+                          (str "." (:CODE-CLM metadata-value))) eqto tbclm))
 
 (defn
   meta-join
@@ -186,19 +183,6 @@
   (map #(replace-grp-clm % groupby) output))
 
 (defn
-  replace-meta-clm
-  [clm meta]
-  (println "clm: " clm)
-  (if (some #(= % clm) (map name (keys meta)))
-    (st/replace clm clm (str (create-metatblname ((keyword clm) meta)) ".NAME"))
-    clm))
-
-(defn
-  meta-out
-  [meta output]
-  (map #(replace-meta-clm % meta) output))
-
-(defn
   select-clause
   [output groupby]
   (if (if-nil-or-empty groupby)
@@ -247,17 +231,6 @@
                                            ord ch-ord grp ch-grp mf))]
     (println query)
     query))
-
-(defn
-  matadata-fields
-  "get all metadata fields"
-  []
-  (let [mf (first metadata-fields)]
-    (jdbc/with-connection (dbs)
-      (jdbc/with-query-results 
-        res 
-        [(str "SELECT " (val mf) " FROM " (key mf))]
-        (doall res)))))
 
 ;;;;;;;;;;;;;; DATABASE METADATA ;;;;;;;;;;;;;;;;;;;
 

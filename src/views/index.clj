@@ -62,24 +62,13 @@
                ((keyword grpname) req-map))))
 
 (defn 
-  option-meta2
-  [x y req-map]  
-  (when-not (some #(= (upper-case (:column_name y)) %) no-mf-clms) 
-    (let [metaname (create-id MTA x y)]
-      [:div
-       (drop-down {:id metaname :class "crit-txt"} 
-                  metaname (cons  nil (action/get-mata-fields)) 
-                  ((keyword metaname) req-map))
-       (label {:class "drp-dwn-lbl"} "Meta" "Meta")])))
-
-(defn 
   option-meta
   [x y req-map]  
   (when-not (some #(= (upper-case (:column_name y)) %) no-mf-clms) 
     (let [metaname (create-id MTA x y)]
       [:div
        (check-box {:id metaname} metaname ((keyword metaname) req-map))
-       (label {:class "drp-dwn-lbl"} "Meta" "Meta")])))
+       (label {:class "drp-dwn-lbl"} "Meta" "Code to Name")])))
 
 (defn
   clm-options

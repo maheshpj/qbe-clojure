@@ -72,7 +72,7 @@
 (defn
   get-mf
   [pmf]
-  (zipmap (map keyword pmf) (map #(str "MV_" (.indexOf pmf %) ".NAME") pmf)))
+  (zipmap (map keyword pmf) (map #(str meta_alias (.indexOf pmf %) "." (:COLUMN metadata-value)) pmf)))
 
 (defn
   create-query-seqs
