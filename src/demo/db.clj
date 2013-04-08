@@ -27,6 +27,32 @@
 (def number-clm-types (list "numeric" "int" "int4" "NUMBER" "integer" "bigint" "smallint"))
 (def number-symbols (list ">" "<" "=" ">=" "<=" "!=" "<>"))
 
+
+(defn
+  create-metatblname
+  [mf]
+  (str (st/upper-case (str (st/replace mf " " "-") "_MDV"))))
+
+(defn 
+  from-meta-tbl
+  [mf]
+  (str " LEFT OUTER JOIN"
+       " (SELECT AMS_METADATA_FIELD.NAME FIELD_NAME, AMS_METADATA_VALUE.REFERENCE_ID, AMS_METADATA_VALUE.CODE, AMS_METADATA_VALUE.NAME" 
+       " FROM AMS_METADATA_FIELD, AMS_METADATA_VALUE"
+       " WHERE AMS_METADATA_VALUE.METADATA_FIELD_ID = AMS_METADATA_FIELD.REFERENCE_ID"
+       " AND AMS_METADATA_FIELD.NAME = " mf
+			    ")" (create-metatblname mf)))
+
+(defn
+  on-meta-tbl
+  [mf tbclm]
+  (str (create-metatblname mf) ".CODE" eqto tbclm))
+
+(defn
+  meta-join
+  [mf tbclm]
+  (str (from-meta-tbl mf) (on-meta-tbl mf tbclm)))
+
 (defn
   is-db-type-ora
   []
@@ -165,6 +191,19 @@
   (map #(replace-grp-clm % groupby) output))
 
 (defn
+  replace-meta-clm
+  [clm meta]
+  (println "clm: " clm)
+  (if (some #(= % clm) (map name (keys meta)))
+    (st/replace clm clm (str (create-metatblname ((keyword clm) meta)) ".NAME"))
+    clm))
+
+(defn
+  meta-out
+  [meta output]
+  (map #(replace-meta-clm % meta) output))
+
+(defn
   select-clause
   [output groupby]
   (if (if-nil-or-empty groupby)
@@ -194,11 +233,16 @@
 (defn
   generate-query-str
   "Generates the query string from UI values"
-  [output root criteria orderby groupby]
+  [output root criteria orderby groupby meta]
+  (when-not (if-nil-or-empty meta) 
+    (def output (meta-out meta output)))
+  (println output)
   (str 
     (select-clause output groupby)
     (from-clause root)
     (onjoin/create-join db-grph (keyword root) output table-pk)
+    (when-not (if-nil-or-empty meta) 
+      (map #(meta-join (val %) (name (key %))) meta))
     (where-clause criteria)
     (if (and (> (count output) 1) (not (if-nil-or-empty groupby)))
       (groupby-clause (remove #(= % (name (key groupby))) output)))
@@ -206,10 +250,21 @@
 
 (defn
   create-query-str
-  [op cr rt ord grp]
-  (let [query (st/trim (generate-query-str op rt cr ord grp))]
+  [op cr rt ord grp mf]
+  (let [query (st/trim (generate-query-str op rt cr ord grp mf))]
     (println query)
     query))
+
+(defn
+  matadata-fields
+  "get all metadata fields"
+  []
+  (let [mf (first metadata-fields)]
+    (jdbc/with-connection (dbs)
+      (jdbc/with-query-results 
+        res 
+        [(str "SELECT " (val mf) " FROM " (key mf))]
+        (doall res)))))
 
 ;;;;;;;;;;;;;; DATABASE METADATA ;;;;;;;;;;;;;;;;;;;
 
@@ -351,8 +406,8 @@
   create-db-graph
   []
   (when (nil? db-grph)
-    (def db-grph ;ams-graph)));
-      (get-db-graph))))
+    (def db-grph ams-graph)));
+      ;(get-db-graph))))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 

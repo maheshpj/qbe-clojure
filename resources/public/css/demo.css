@@ -116,4 +116,13 @@ table tbody tr {
 	margin:5px 5px 5px 20px; 
 	width: 150pt;
 	}	
+.drp-down {
+	margin:5px 5px 5px 20px; 
+	}
+
+.drp-dwn-lbl {
+	color: darkgrey; 
+	font-size: 15px;
+	}
+		
 	

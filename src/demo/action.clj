@@ -8,6 +8,8 @@
 (def rt)
 (def ord)
 (def grp)
+(def mf)
+(def mem-mata-fields nil)
 (def err "Invalid Criteria")
 (def err_grp "Please select only one Group Function column.")
 
@@ -43,6 +45,7 @@
   (def cr (filter-map-by-prefix TXT req-map))
   (def ord (filter-list-by-prefix ORD req-map))
   (def grp (filter-map-by-prefix GRP req-map))
+  (def mf (filter-map-by-prefix MTA req-map))
   (def rt (first (filter #(= (st/upper-case (str prf ((keyword RT) req-map))) 
                              (st/upper-case %)) (keys db/cached-schema)))))
 
@@ -53,8 +56,20 @@
     (if (> (count grp) 1)
       {:Error err_grp}
       (try
-        (db/execute-query (db/create-query-str op cr rt ord (first grp)))
+        (db/execute-query (db/create-query-str op cr rt ord (first grp) mf))
         (catch Exception _ {:Error err})))))
+
+(defn
+  meta-fields
+  []
+  (println "Getting Metadata fields...")
+  (sort (apply concat (map #(vals %)(db/matadata-fields)))))
+
+(defn
+  get-mata-fields
+  []  
+  (if (if-nil-or-empty mem-mata-fields)
+    (meta-fields) mem-mata-fields))
 
 (defn
   get-schema
@@ -63,6 +78,7 @@
   (db/fetch-db-table-columns-map)
   (db/get-pk-ralation db/cached-schema)
   (db/create-db-graph)
+  (def mem-mata-fields (get-mata-fields))   
   db/cached-schema)
 
 (defn
@@ -75,4 +91,4 @@
 (defn
   get-header-clms
   []
-  (create-headers (val-up prf) "" op))
+  (create-headers (val-up prf) "" op))     

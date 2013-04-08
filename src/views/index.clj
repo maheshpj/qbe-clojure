@@ -12,7 +12,7 @@
 (defn
   header-name
   [vect]
-  (map #(replace-first % "." " ") vect))
+  (map #(replace-first (capitalize (name %)) "." " ") vect))
 
 (defn
   cell-style
@@ -24,8 +24,7 @@
   [clm-names-vec data-map]
   [:table 
    [:thead
-    (println "data-map: " data-map)
-    [:tr (map-tag :th nil (header-name clm-names-vec))]]
+    [:tr (map-tag :th nil (header-name (keys (first data-map))))]] ;clm-names-vec
    [:tbody
     (for [x data-map] [:tr (map-tag :td {:style (cell-style x)} x)])]])
 
@@ -58,9 +57,20 @@
   option-grp
   [x y req-map]
   (let [grpname (create-id GRP x y)]
-    (drop-down {:id grpname :class "crit-txt"} 
+    (drop-down {:id grpname :class "drp-down"} 
                grpname (cons nil group-fun) 
                ((keyword grpname) req-map))))
+
+(defn 
+  option-meta
+  [x y req-map]  
+  (when-not (some #(= (upper-case (:column_name y)) %) no-mf-clms) 
+    (let [metaname (create-id MTA x y)]
+      [:div
+       (drop-down {:id metaname :class "crit-txt"} 
+                  metaname (cons  nil (action/get-mata-fields)) 
+                  ((keyword metaname) req-map))
+       (label {:class "drp-dwn-lbl"} "Meta" "Meta")])))
 
 (defn
   clm-options
@@ -70,7 +80,9 @@
    (option-criteria x y req-map)
    (option-ord-by x y req-map) "^"
    [:br]
-   (option-grp x y req-map)])
+   (option-grp x y req-map) (label {:class "drp-dwn-lbl"} "Group" "Group")  
+   [:br]
+   (option-meta x y req-map)])
 
 (defn
   clm-checkbox
@@ -89,8 +101,8 @@
 
 (defn
   get-branch
-  [req-map map x]
-  (for [y (get map x)]
+  [req-map mp x]
+  (for [y (sort-by :column_name (get mp x))]
     [:li 
      (clm-checkbox x y req-map)
      (upper-case (:column_name y))
