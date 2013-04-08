@@ -36,17 +36,12 @@
 (defn 
   from-meta-tbl
   [mf]
-  (str " LEFT OUTER JOIN"
-       " (SELECT AMS_METADATA_FIELD.NAME FIELD_NAME, AMS_METADATA_VALUE.REFERENCE_ID, AMS_METADATA_VALUE.CODE, AMS_METADATA_VALUE.NAME" 
-       " FROM AMS_METADATA_FIELD, AMS_METADATA_VALUE"
-       " WHERE AMS_METADATA_VALUE.METADATA_FIELD_ID = AMS_METADATA_FIELD.REFERENCE_ID"
-       " AND AMS_METADATA_FIELD.NAME = " mf
-			    ")" (create-metatblname mf)))
+  (str " LEFT OUTER JOIN AMS_METADATA_VALUE " (st/replace mf ".NAME" "")))
 
 (defn
   on-meta-tbl
   [mf tbclm]
-  (str (create-metatblname mf) ".CODE" eqto tbclm))
+  (str " ON " (st/replace mf ".NAME" ".CODE") eqto tbclm))
 
 (defn
   meta-join
@@ -233,25 +228,23 @@
 (defn
   generate-query-str
   "Generates the query string from UI values"
-  [output root criteria orderby groupby meta]
-  (when-not (if-nil-or-empty meta) 
-    (def output (meta-out meta output)))
-  (println output)
+  [output ch-op root criteria ch-cr orderby ch-ord groupby ch-grp meta]
   (str 
-    (select-clause output groupby)
+    (select-clause ch-op ch-grp)
     (from-clause root)
     (onjoin/create-join db-grph (keyword root) output table-pk)
     (when-not (if-nil-or-empty meta) 
       (map #(meta-join (val %) (name (key %))) meta))
-    (where-clause criteria)
-    (if (and (> (count output) 1) (not (if-nil-or-empty groupby)))
-      (groupby-clause (remove #(= % (name (key groupby))) output)))
-    (orderby-clause orderby)))
+    (where-clause ch-cr)
+    (if (and (> (count ch-op) 1) (not (if-nil-or-empty ch-grp)))
+      (groupby-clause (remove #(= % (name (key ch-grp))) ch-op)))
+    (orderby-clause ch-ord)))
 
 (defn
   create-query-str
-  [op cr rt ord grp mf]
-  (let [query (st/trim (generate-query-str op rt cr ord grp mf))]
+  [op ch-op cr ch-cr rt ord ch-ord grp ch-grp mf]
+  (let [query (st/trim (generate-query-str op ch-op rt cr ch-cr 
+                                           ord ch-ord grp ch-grp mf))]
     (println query)
     query))
 

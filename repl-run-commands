@@ -4,3 +4,13 @@ Run following commands in REPL
 	(demo/-main)
 	
 Go to 	http://localhost:8080
+
+
+=================================
+
+TO DO
+
+1. How to show foreign key columns in report
+2. How to join Metadata/lookup values
+3. How to figure out association table in many-to-many relationship tables for better shortest path
+4. bug - header names are not displayed correctly
