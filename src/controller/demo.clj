@@ -28,7 +28,7 @@
 (defn
   run
   [req]
-  ;(println req)
+  (println req)
   (if-not (if-nil-or-empty req)
     (index  (into {} (filter #(not (st/blank? (val %))) (keywordize-keys req))))
     (ring/redirect "/")))

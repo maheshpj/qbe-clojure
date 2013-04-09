@@ -104,25 +104,12 @@
         (catch Exception _ {:Error err})))))
 
 (defn
-  meta-fields
-  []
-  (println "Getting Metadata fields...")
-  (sort (apply concat (map #(vals %)(db/matadata-fields)))))
-
-(defn
-  get-mata-fields
-  []  
-  (if (if-nil-or-empty mem-mata-fields)
-    (meta-fields) mem-mata-fields))
-
-(defn
   get-schema
   []
   (db/set-util-prf)
   (db/fetch-db-table-columns-map)
   (db/get-pk-ralation db/cached-schema)
   (db/create-db-graph)
-  (def mem-mata-fields (get-mata-fields))   
   db/cached-schema)
 
 (defn

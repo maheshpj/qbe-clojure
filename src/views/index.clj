@@ -67,7 +67,7 @@
   (when-not (some #(= (upper-case (:column_name y)) %) no-mf-clms) 
     (let [metaname (create-id MTA x y)]
       [:div
-       (check-box {:id metaname} metaname ((keyword metaname) req-map))
+       (check-box {:id metaname :class "drp-down"} metaname ((keyword metaname) req-map))
        (label {:class "drp-dwn-lbl"} "Meta" "Code to Name")])))
 
 (defn

@@ -6,7 +6,7 @@
             [demo.db-graph :as onjoin]))
 
 (def cached-schema nil)
-(def table-pk nil)
+(def table-pk {nil nil, :AMS_SEQUENCE_ATTRIBUTE "REFERENCE_ID", :AMS_USER_PERMISSION "REFERENCE_ID", :AMS_ADP_METADATA_FV "REFERENCE_ID", :AMS_TEST "REFERENCE_ID", :AMS_OTHER_ASSET "REFERENCE_ID", :AMS_RATIONALE_SET "REFERENCE_ID", :AMS_ART_INFO "REFERENCE_ID", :AMS_USER_ROLE_PERMISSION "USER_PERMISSION_ID", :AMS_USER_ACCOUNT_ROLE "MEMBER_OF_ROLE", :AMS_PGM_RATIONALE_SET "REFERENCE_ID", :AMS_ASSET_PAY_RATE "REFERENCE_ID", :AMS_STIMULUS_SPECIFICATION "REFERENCE_ID", :AMS_PGM_METADATA_FIELD "REFERENCE_ID", :AMS_STIMULUS_ALIGN_SCHEME "REFERENCE_ID", :AMS_ORDER_WF_STATE "REFERENCE_ID", :AMS_ORDER_METADATA_FV "REFERENCE_ID", :AMS_ASSET_ORDER_ALIGN "REFERENCE_ID", :AMS_WF_ACTIVITY_DEF "REFERENCE_ID", :AMS_USER "REFERENCE_ID", :AMS_EVENT "REFERENCE_ID", :AMS_COPYRIGHT "REFERENCE_ID", :AMS_HOTSPOT_AREA "REFERENCE_ID", :AMS_ADDRESS "REFERENCE_ID", :AMS_CONTENT_PART "REFERENCE_ID", :AMS_ART_ASSET "REFERENCE_ID", :AMS_ASSET_ORDER "REFERENCE_ID", :AMS_ASSET_DEV_PLAN "REFERENCE_ID", :AMS_AUTH_GRANT "REFERENCE_ID", :AMS_WF_ACTIVITY "REFERENCE_ID", :AMS_ASSET_ASSOCIATION "REFERENCE_ID", :AMS_SEQUENCE "REFERENCE_ID", :AMS_ASSESSMENT_ITEM "REFERENCE_ID", :AMS_PUBCONFIG_ASSET "REFERENCE_ID", :AMS_USER_ROLE_GROUP "MEMBER_OF_ROLE", :AMS_TYPE_QUANTITY "REFERENCE_ID", :AMS_STANDARD_SET "REFERENCE_ID", :AMS_ASSET_STATUS_VALUE "CODE", :AMS_LEVEL_GRADE_MAP "REFERENCE_ID", :AMS_TEI_EXTENSION "REFERENCE_ID", :AMS_STIMULUS_READABILITY_ALIGN "REFERENCE_ID", :AMS_ITEM_STANDARD_ALIGNMENT "REFERENCE_ID", :AMS_PGM_STANDARD_ALIGNMENT "REFERENCE_ID", :AMS_STANDARD "REFERENCE_ID", :AMS_ENTITY_LOCK "REFERENCE_ID", :AMS_ADP_DEV_YEAR "DEV_YEAR_CODE", :AMS_REPORTS "REFERENCE_ID", :AMS_PGM_METADATA_FIELD_VALUE "REFERENCE_ID", :AMS_WF_PROCESS_DEF "REFERENCE_ID", :AMS_ITEM_ALIGN_SCHEME "REFERENCE_ID", :AMS_TEST_FORM "REFERENCE_ID", :AMS_USER_ROLE "REFERENCE_ID", :AMS_ASSET "ASSET_ID", :AMS_ART_ASSET_FILE "REFERENCE_ID", :AMS_ASSET_CONTENT "REFERENCE_ID", :AMS_STIMULUS "REFERENCE_ID", :AMS_ASSET_TEMPLATE "REFERENCE_ID", :AMS_SEQUENCE_ELEMENT "REFERENCE_ID", :AMS_PROGRAM "REFERENCE_ID", :AMS_SEQ_REPORT "REFERENCE_ID", :AMS_HOTSPOT_EXTENSION "REFERENCE_ID", :AMS_WF_STATUS "STATUS_CODE", :AMS_PGM_HCHY "RELATION_ID", :AMS_WF_ACTIVITY_STATUS "ACTIVITY_REFID", :AMS_WF_TRANSITION_RULE "REFERENCE_ID", :AMS_HOTSPOT_CHOICE "REFERENCE_ID", :AMS_ASSET_FILE "REFERENCE_ID", :AMS_WF_ACTIVITY_PERM "USER_PERMISSION_REFID", :AMS_ACCOUNT "REFERENCE_ID", :AMS_OTHER_ASSET_FV "REFERENCE_ID", :AMS_ORDER_CONTRACT "REFERENCE_ID", :AMS_ITEM_TOOLS "REFERENCE_ID", :AMS_REPORTING_CATEGORY "REFERENCE_ID", :AMS_ORDER_DETAIL "REFERENCE_ID", :AMS_WF_STATE_SMY "ASSET_ID", :AMS_WF_STATE "REFERENCE_ID", :AMS_PGM_ASSET_ALIGNMENT "REFERENCE_ID"})
 (def db-grph nil)
 
 (def ^:dynamic *SELECT* "SELECT")
@@ -31,7 +31,7 @@
 (defn 
   from-meta-tbl
   [mf]
-  (str " LEFT OUTER JOIN " (:TABLE metadata-value) 
+  (str " LEFT OUTER JOIN " (:TABLE metadata-value) " "
        (st/replace mf (str "." (:COLUMN metadata-value)) "")))
 
 (defn
@@ -210,15 +210,29 @@
   (cl *GROUP-BY* comma groupby))
 
 (defn
+  clm-alias
+  [revmp i]
+  (let [nm (name (get revmp i))]
+    (subs nm (+ 1 (.indexOf nm ".")) (count nm))))
+
+(defn
+  select-alias
+  [ch-op meta]
+  (let [revmp (zipmap (vals meta) (keys meta))]
+    (map #(if (contains? revmp %) 
+            (st/replace % % (str % " AS \"" (clm-alias revmp %) "\""))
+            %) ch-op)))
+
+(defn
   generate-query-str
   "Generates the query string from UI values"
   [output ch-op root criteria ch-cr orderby ch-ord groupby ch-grp meta]
   (str 
-    (select-clause ch-op ch-grp)
+    (select-clause (select-alias ch-op meta) ch-grp)
     (from-clause root)
     (onjoin/create-join db-grph (keyword root) output table-pk)
     (when-not (if-nil-or-empty meta) 
-      (map #(meta-join (val %) (name (key %))) meta))
+      (apply str (map #(meta-join (val %) (name (key %))) meta)))
     (where-clause ch-cr)
     (if (and (> (count ch-op) 1) (not (if-nil-or-empty ch-grp)))
       (groupby-clause (remove #(= % (name (key ch-grp))) ch-op)))
