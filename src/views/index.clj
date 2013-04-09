@@ -36,7 +36,7 @@
 (defn
   show-div
   [x y req-map]
-  (if ((keyword (create-id CLM x y)) req-map) "inline" "none"))
+  (if ((keyword (create-id CLM x y)) req-map) "table-row" "none")) 
 
 (defn
   option-criteria
@@ -57,9 +57,11 @@
   option-grp
   [x y req-map]
   (let [grpname (create-id GRP x y)]
-    (drop-down {:id grpname :class "drp-down"} 
-               grpname (cons nil group-fun) 
-               ((keyword grpname) req-map))))
+    [:div
+     (drop-down {:id grpname :class "drp-down"} 
+                grpname (cons nil group-fun) 
+                ((keyword grpname) req-map))
+     (label {:class "drp-dwn-lbl"} "Group" "Group") ]))
 
 (defn 
   option-meta
@@ -82,14 +84,11 @@
   clm-options
   [x y req-map]
   [:div {:id (create-id DIV x y)  
-         :style (str "display:" (show-div x y req-map))}
+         :style (str "display:" (show-div x y req-map) "; background-color: white")}
    (option-criteria x y req-map)
    (option-ord-by x y req-map) "^"
-   [:br]
-   (option-grp x y req-map) (label {:class "drp-dwn-lbl"} "Group" "Group")  
-   [:br]
+   (option-grp x y req-map)  
    (option-meta x y req-map)
-   [:br]
    (option-exclude x y req-map)])
 
 (defn
