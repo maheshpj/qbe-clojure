@@ -70,6 +70,14 @@
        (check-box {:id metaname :class "drp-down"} metaname ((keyword metaname) req-map))
        (label {:class "drp-dwn-lbl"} "Meta" "Code to Name")])))
 
+(defn 
+  option-exclude
+  [x y req-map]  
+  (let [name (create-id EXC x y)]
+      [:div
+       (check-box {:id name :class "drp-down"} name ((keyword name) req-map))
+       (label {:class "drp-dwn-lbl"} "Exclude" "Exclude")]))
+
 (defn
   clm-options
   [x y req-map]
@@ -80,7 +88,9 @@
    [:br]
    (option-grp x y req-map) (label {:class "drp-dwn-lbl"} "Group" "Group")  
    [:br]
-   (option-meta x y req-map)])
+   (option-meta x y req-map)
+   [:br]
+   (option-exclude x y req-map)])
 
 (defn
   clm-checkbox

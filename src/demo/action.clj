@@ -9,6 +9,7 @@
 (def ord)
 (def grp)
 (def mf)
+(def exc)
 (def ch-op)
 (def ch-grp)
 (def ch-ord)
@@ -77,7 +78,8 @@
 (defn
   create-query-seqs
   [req-map]
-  (def op (filter-list-by-prefix CLM req-map))
+  (def exc (filter-list-by-prefix EXC req-map))
+  (def op (remove (fn [i] (some #(= i %) exc)) (filter-list-by-prefix CLM req-map)))
   (def ch-op op)
   (def cr (filter-map-by-prefix TXT req-map))
   (def ch-cr cr)

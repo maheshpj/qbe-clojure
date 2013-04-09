@@ -11,9 +11,13 @@ Go to 	http://localhost:8080
 TO DO
 
 1. How to show foreign key columns in report
-2. How to join Metadata/lookup values
+2. How to join Metadata/lookup values 
+- DONE
 3. How to figure out association table in many-to-many relationship tables for better shortest path
-4. bug - header names are not displayed correctly
+4. bug - header names are not displayed correctly 
+- DONE
 5. IN (1, 2, 3 ..) EXPRESSION
 6. between 1 to 10 expression
 7. in criteria expressions like: 1 and 2 or 3 and 4 or 5 or 6
+8. exclude column from report
+- DONE
