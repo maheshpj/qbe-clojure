@@ -10,7 +10,7 @@ function dislayOptions(clmnm, name) {
 	var clmchkd = document.getElementById(clmnm).checked;
 	
 	if (clmchkd) { 
-		div.style.display = 'inline';
+		div.style.display = 'table-row';
     } else {
     	div.style.display = 'none';
     }

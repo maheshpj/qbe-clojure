@@ -85,7 +85,7 @@
   clm-options
   [x y req-map]
   [:div {:id (create-id DIV x y)  
-         :style (str "display:" (show-div x y req-map) "; background-color: white")}
+         :style (str "display:" (show-div x y req-map) "; background-color: cadetblue")}
    (option-criteria x y req-map)
    (option-ord-by x y req-map) "^"
    (option-grp x y req-map)  
