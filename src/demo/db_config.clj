@@ -31,3 +31,10 @@
                        :url "",
                        :user "",
                        :pwd ""}})
+
+(def rem-views '("AMS_ABSTRACT_ART_ASSET" "AMS_ABSTRACT_ASSET"))
+(def rem-metadata '("AMS_METADATA_FIELD" "AMS_METADATA_VALUE"))
+(def rem-clms '("REFERENCE_ID" "VERSION"))
+(def metadata-value {:TABLE "AMS_METADATA_VALUE", :COLUMN "NAME", :CODE-CLM "CODE"})
+(def meta_alias "MV_")
+(def no-mf-clms (list "CREATED_BY" "CREATED_DATE" "UPDATED_BY" "UPDATED_DATE" "VERSION" "REFERENCE_ID" "USER_VERSION"))

@@ -3,7 +3,8 @@
         [hiccup.form]
         [hiccup.element]
         [clojure.string :only (upper-case replace-first capitalize)]
-        [utils])
+        [utils]
+        [demo.db-config])
   (:require [demo.action :as action]))
 
 (def root-err "Please select a 'Report for' value")
@@ -110,11 +111,12 @@
   get-branch
   [req-map mp x]
   (for [y (sort-by :column_name (get mp x))]
-    [:li 
-     (clm-checkbox x y req-map)
-     (upper-case (:column_name y))
-     [:br]
-     (clm-options x y req-map)]))
+    (when-not (some #(= (upper-case (:column_name y)) %) rem-clms)
+      [:li 
+       (clm-checkbox x y req-map)
+       (upper-case (:column_name y))
+       [:br]
+       (clm-options x y req-map)])))
 
 (defn
   hdn-field

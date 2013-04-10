@@ -1,5 +1,6 @@
 (ns demo.action
-  (:use [utils])
+  (:use [utils]
+        [demo.db-config])
   (:require [demo.db :as db]
             [clojure.string :only (capitalize replace-first upper-case) :as st]))
 
