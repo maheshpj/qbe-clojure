@@ -1,6 +1,7 @@
 (ns demo.action
   (:use [utils]
-        [demo.db-config])
+        [demo.db-config]
+        [clojure.set])
   (:require [demo.db :as db]
             [clojure.string :only (capitalize replace-first upper-case) :as st]))
 
@@ -27,8 +28,8 @@
 (defn
   remove-db-prefix
   [kee prefix]
-  (st/replace-first 
-       (name kee) (str prefix ".") ""))
+  (st/replace-first (name kee) (str prefix ".") ""))
+
 (defn
   filter-list-by-prefix
   "Return list of filtered request with prefix"
@@ -42,8 +43,7 @@
   [prefix req-map]
   (let [crmap (filter-req prefix req-map)]
     (zipmap (map #(keyword (remove-db-prefix % prefix))
-                 (keys crmap))
-            (vals crmap))))
+                 (keys crmap)) (vals crmap))))
 
 (defn
   mf-to-clm
@@ -74,25 +74,33 @@
 (defn
   get-mf
   [pmf]
-  (zipmap (map keyword pmf) (map #(str meta_alias (.indexOf pmf %) "." (:COLUMN metadata-value)) pmf)))
+  (zipmap (map keyword pmf) 
+          (map #(str meta_alias (.indexOf pmf %) "." (:COLUMN metadata-value)) pmf)))
+
+(defn
+  deselection
+  [mp ls]
+  (let [kees (keys mp)]
+    (apply dissoc mp 
+           (difference (set kees) (intersection (set (map keyword ls)) kees)))))
 
 (defn
   create-query-seqs
   [req-map]
   (def exc (filter-list-by-prefix EXC req-map))
-  (def op (remove (fn [i] (some #(= i %) exc)) (filter-list-by-prefix CLM req-map)))
-  (def ch-op op)
-  (def cr (filter-map-by-prefix TXT req-map))
-  (def ch-cr cr)
-  (def ord (filter-list-by-prefix ORD req-map))
-  (def ch-ord ord)
-  (def grp (filter-map-by-prefix GRP req-map))
-  (def ch-grp grp)
+  (let [pout (filter-list-by-prefix CLM req-map)
+        pmf (filter-list-by-prefix MTA req-map)
+        pcr (filter-map-by-prefix TXT req-map)
+        pgrp (filter-map-by-prefix GRP req-map)
+        pord (filter-list-by-prefix ORD req-map)]
+    (def op (remove (fn [i] (some #(= i %) exc)) pout))
+    (def ord (intersection (set pord) (set pout)))
+    (def cr (deselection pcr pout))
+    (def grp (deselection pgrp pout))
+    (def mf (deselection (get-mf pmf) pout)))
   (def rt (filter-RT req-map))
-  (let [pmf (filter-list-by-prefix MTA req-map)]
-    (def mf (get-mf pmf)))
-  (when-not (if-nil-or-empty mf)
-    (change-params mf op grp ord cr)))
+  (def ch-op op)(def ch-cr cr)(def ch-ord ord)(def ch-grp grp)
+  (when-not (if-nil-or-empty mf) (change-params mf op grp ord cr)))
 
 (defn
   get-result

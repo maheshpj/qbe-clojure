@@ -48,12 +48,6 @@
                  :class "crit-txt"} 
                 txtname ((keyword txtname) req-map))))
 
-(defn
-  option-ord-by
-  [x y req-map]
-  (let [ordname (create-id ORD x y)]
-    (check-box {:id ordname} ordname ((keyword ordname) req-map))))
-
 (defn 
   option-grp
   [x y req-map]
@@ -65,21 +59,12 @@
      (label {:class "drp-dwn-lbl"} "Group" "Group") ]))
 
 (defn 
-  option-meta
-  [x y req-map]  
-  (when-not (some #(= (upper-case (:column_name y)) %) no-mf-clms) 
-    (let [metaname (create-id MTA x y)]
-      [:div
-       (check-box {:id metaname :class "drp-down"} metaname ((keyword metaname) req-map))
-       (label {:class "drp-dwn-lbl"} "Meta" "Code to Name")])))
-
-(defn 
-  option-exclude
-  [x y req-map]  
-  (let [name (create-id EXC x y)]
-      [:div
+  gen-cb-option
+  [x y req-map prfx nm]  
+  (let [name (create-id prfx x y)]
+      [:span
        (check-box {:id name :class "drp-down"} name ((keyword name) req-map))
-       (label {:class "drp-dwn-lbl"} "Exclude" "Exclude")]))
+       (label {:class "drp-dwn-lbl"} nm nm)]))
 
 (defn
   clm-options
@@ -87,10 +72,10 @@
   [:div {:id (create-id DIV x y)  
          :style (str "display:" (show-div x y req-map) "; background-color: cadetblue")}
    (option-criteria x y req-map)
-   (option-ord-by x y req-map) "^"
    (option-grp x y req-map)  
-   (option-meta x y req-map)
-   (option-exclude x y req-map)])
+   (gen-cb-option x y req-map MTA "Code to Name")
+   (gen-cb-option x y req-map EXC "Exclude")
+   (gen-cb-option x y req-map ORD "Sort")])
 
 (defn
   clm-checkbox
@@ -146,8 +131,8 @@
 (defn
   create-grid
   [caption clm-names-vec data-map]
-  (list ;[:h2 caption]
-        [:div {:class "grid-div"} (grid clm-names-vec data-map)]
+  (list 
+    [:div {:class "grid-div"} (grid clm-names-vec data-map)]
         (label {:style "float:right;"} nil (str "No of records:" " " (count data-map)))))
 
 (defn
@@ -159,7 +144,6 @@
   create-list
   [req-map caption map]
   (list    
-    ;[:h2 caption]
     [:div#root-div "Report for:  "
      (drop-down {:id RT} RT 
                 (cons nil (sort (get-options map))) 

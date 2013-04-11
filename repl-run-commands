@@ -21,3 +21,5 @@ TO DO
 7. in criteria expressions like: 1 and 2 or 3 and 4 or 5 or 6
 8. exclude column from report
 - DONE
+9. bug - deselected colum criteria should not get included
+- DONE
