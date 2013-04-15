@@ -100,6 +100,9 @@
     (def mf (deselection (get-mf pmf) pout)))
   (def rt (filter-RT req-map))
   (def ch-op op)(def ch-cr cr)(def ch-ord ord)(def ch-grp grp)
+  (let [pext ((keyword EXT) req-map)]
+    (when-not (if-nil-or-empty pext)
+      (def ch-op (conj ch-op pext))))
   (when-not (if-nil-or-empty mf) (change-params mf op grp ord cr)))
 
 (defn

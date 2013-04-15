@@ -83,7 +83,7 @@
   (let [clmname (create-id CLM x y)
         divid (create-id DIV x y)]
     (check-box {:id clmname 
-                :onclick (str "dislayOptions('" clmname "', '"divid"')") }
+                :onclick (str "dislayOptions('" clmname "', '"divid"')")}
                clmname ((keyword clmname) req-map))))
 
 (defn
@@ -92,12 +92,22 @@
   (let [val ((keyword (create-id HDN x nil)) req-map)]
     (if (nil? val) "closed" val)))
 
+(defn isselect
+  [sel]
+  (if (= "true" sel) "inline" "none"))
+
+(defn show-selected
+  [showselected val]
+  (if (= "true" showselected) (isselect val) "inline"))
+
 (defn
   get-branch
   [req-map mp x]
   (for [y (sort-by :column_name (get mp x))]
     (when-not (some #(= (upper-case (:column_name y)) %) rem-clms)
-      [:li 
+      [:li {:style (str "display:" 
+                        (show-selected (:SELECTED req-map) 
+                                       ((keyword (create-id CLM x y)) req-map)))}
        (clm-checkbox x y req-map)
        (upper-case (:column_name y))
        [:br]
@@ -148,7 +158,10 @@
      (drop-down {:id RT} RT 
                 (cons nil (sort (get-options map))) 
                 (:RT req-map)) [:font {:class "required"} "    *"]]
-    [:div#list-div (bullets req-map map)]))
+    [:div#list-div (bullets req-map map)]
+    [:div
+     (text-area {:id EXT :placeholder "Extra Column" :style "width:99%"} EXT (:EXT req-map))]
+    [:div  (check-box "SELECTED" (:SELECTED req-map)) " Show Selected Only" ]))
 
 
 (defn 

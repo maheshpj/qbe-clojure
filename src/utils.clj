@@ -11,6 +11,7 @@
 (def GRP "GRP")
 (def MTA "MTA")
 (def EXC "EXC")
+(def EXT "EXT")
 (def group-fun (list "AVG" "COUNT" "DISTINCT" "MAX" "MIN" "SUM"))
 
 (def db-grph-keys [:fkcolumn_name :pktable_name :fktable_name])

@@ -386,8 +386,8 @@
   create-db-graph
   []
   (when (nil? db-grph)
-    (def db-grph ;ams-graph)));
-      (get-db-graph))))
+    (def db-grph ams-graph)));
+      ;(get-db-graph))))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 

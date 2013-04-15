@@ -25,4 +25,3 @@
   [& args]
   (run-jetty application {:port port :join? false})
   (println "Welcome to the AutoQuery Demo. Browse to" (str "http://" host ":" port) "to get started!"))
-
