@@ -94,24 +94,22 @@
 
 (defn isselect
   [sel]
-  (if (= "true" sel) "inline" "none"))
+  (if (= "true" sel) true false))
 
 (defn show-selected
   [showselected val]
-  (if (= "true" showselected) (isselect val) "inline"))
+  (if (= "true" showselected) (isselect val) true))
 
 (defn
   get-branch
   [req-map mp x]
   (for [y (sort-by :column_name (get mp x))]
     (when-not (some #(= (upper-case (:column_name y)) %) rem-clms)
-      [:li {:style (str "display:" 
-                        (show-selected (:SELECTED req-map) 
-                                       ((keyword (create-id CLM x y)) req-map)))}
-       (clm-checkbox x y req-map)
-       (upper-case (:column_name y))
-       [:br]
-       (clm-options x y req-map)])))
+      (if (show-selected (:SELECTED req-map) 
+                         ((keyword (create-id CLM x y)) req-map))
+        [:li (clm-checkbox x y req-map)
+         (upper-case (:column_name y)) [:br]
+         (clm-options x y req-map)]))))
 
 (defn
   hdn-field
@@ -128,6 +126,7 @@
   bullets
   "Create left side panel of Table - column tree"
   [req-map map]
+  (println "req-map: " req-map)
   [:ul {:class "open"}
    (for [x (sort (keys map))]
      [:li (link-to {:style "text-decoration: none;" :id (str "img_" x) 
