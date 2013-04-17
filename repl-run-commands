@@ -6,7 +6,44 @@ Run following commands in REPL
 Go to 	http://localhost:8080
 
 
-=================================
+===================================================================================================
+ECLIPSE:
+
+Follow following instructions to run AutoQuery Project in Eclipse. 
+
+1. git project : https://github.com/maheshpj/demo
+
+check out or download as ZIP
+
+2. Get eclipse plugin for Clojure programming : counterclockwise from
+
+Update Site - http://ccw.cgrand.net/updatesite/
+
+3. in eclipse, right click > import > existing Maven projects > "select Demo directory"
+
+4. Right click Eclipse Demo project and select Configure > Convert to Clojure Project
+
+5. see if you have maven dependencies in demo project
+
+6. Go to JAVA Perspective
+
+7. Open Demo > src > demo > db-config
+
+8. change db-config attributes as per your database
+
+9. Right click Demo > Run as > Clojure application
+
+it should open REPL in user namespace
+
+10. Run following commands in REPL
+    (require 'demo)
+    (demo/-main)
+   
+Go to     http://localhost:8080
+
+ENJOY....
+
+===================================================================================================
 
 TO DO
 
@@ -27,3 +64,4 @@ TO DO
 - DONE
 11. Show selected columns only 
 - DONE
+12. asc / desc targets
