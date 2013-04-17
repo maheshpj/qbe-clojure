@@ -37,7 +37,7 @@
 
 (defn set-prf
   [pprf]
-  (when-not (nil? pprf) (def prf pprf)))
+  (if (nil? pprf) (def prf "") (def prf pprf)))
 
 (defn parenthise
   [vl]
