@@ -10,37 +10,31 @@
 (def root-err "Please select a 'Report for' value")
 (def form-enctype "application/x-www-form-urlencoded")
 
-(defn
-  header-name
+(defn header-name
   [vect]
   (map #(replace-first (capitalize (name %)) "." " ") vect))
 
-(defn
-  cell-style
+(defn cell-style
   [x]
   (str "color: " (if (map? x) "grey" "red")))
 
-(defn
-  grid
+(defn grid
   [clm-names-vec data-map]
   [:table 
    [:thead
-    [:tr (map-tag :th nil (header-name (keys (first data-map))))]] ;clm-names-vec
+    [:tr (map-tag :th nil (header-name (keys (first data-map))))]] 
    [:tbody
     (for [x data-map] [:tr (map-tag :td {:style (cell-style x)} x)])]])
 
-(defn
-  create-id
+(defn create-id
   [prefix tab name]
   (str prefix "." tab (if (nil? name) "" (str "." (:column_name name)))))
 
-(defn
-  show-div
+(defn show-div
   [x y req-map]
   (if ((keyword (create-id CLM x y)) req-map) "table-row" "none")) 
 
-(defn
-  option-criteria
+(defn option-criteria
   [x y req-map]
   (let [txtname (create-id TXT x y)]
     (text-field {:placeholder (str "criteria " (:type_name y)) 
@@ -48,8 +42,7 @@
                  :class "crit-txt"} 
                 txtname ((keyword txtname) req-map))))
 
-(defn 
-  option-grp
+(defn option-grp
   [x y req-map]
   (let [grpname (create-id GRP x y)]
     [:div
@@ -58,27 +51,25 @@
                 ((keyword grpname) req-map))
      (label {:class "drp-dwn-lbl"} "Group" "Group") ]))
 
-(defn 
-  gen-cb-option
+(defn gen-cb-option
   [x y req-map prfx nm]  
   (let [name (create-id prfx x y)]
       [:span
        (check-box {:id name :class "drp-down"} name ((keyword name) req-map))
        (label {:class "drp-dwn-lbl"} nm nm)]))
 
-(defn
-  clm-options
+(defn clm-options
   [x y req-map]
   [:div {:id (create-id DIV x y)  
-         :style (str "display:" (show-div x y req-map) "; background-color: cadetblue")}
-   (option-criteria x y req-map)
-   (option-grp x y req-map)  
-   (gen-cb-option x y req-map MTA "Code to Name")
-   (gen-cb-option x y req-map EXC "Exclude")
-   (gen-cb-option x y req-map ORD "Sort")])
+         :style (str "display:" (show-div x y req-map))} 
+   [:div#opt-div {:style "border: 1px solid lightgrey; background-color: darkslategrey"}
+    (option-criteria x y req-map)
+    (option-grp x y req-map)  
+    (gen-cb-option x y req-map MTA "Code to Name")
+    (gen-cb-option x y req-map EXC "Exclude")
+    (gen-cb-option x y req-map ORD "Sort")]])
 
-(defn
-  clm-checkbox
+(defn clm-checkbox
   [x y req-map]
   (let [clmname (create-id CLM x y)
         divid (create-id DIV x y)]
@@ -86,8 +77,7 @@
                 :onclick (str "dislayOptions('" clmname "', '"divid"')")}
                clmname ((keyword clmname) req-map))))
 
-(defn
-  tr-class
+(defn tr-class
   [x req-map]
   (let [val ((keyword (create-id HDN x nil)) req-map)]
     (if (nil? val) "closed" val)))
@@ -100,8 +90,7 @@
   [showselected val]
   (if (= "true" showselected) (isselect val) true))
 
-(defn
-  get-branch
+(defn get-branch
   [req-map mp x]
   (for [y (sort-by :column_name (get mp x))]
     (when-not (some #(= (upper-case (:column_name y)) %) rem-clms)
@@ -111,46 +100,52 @@
          (upper-case (:column_name y)) [:br]
          (clm-options x y req-map)]))))
 
-(defn
-  hdn-field
+(defn hdn-field
   [x req-map]
   (let [hdnf (create-id HDN x nil)]
     (hidden-field  {:id hdnf} hdnf (tr-class x req-map))))
 
-(defn
-  tblname-no-prf
+(defn tblname-no-prf
   [i]
   (upper-case (replace-first i prf "")))
 
-(defn
-  bullets
+(defn li-table
+  [req-map map x]
+  [:li (link-to {:style "text-decoration: none;" :id (str "img_" x) 
+                 :border "0" :onclick (str "toggle('" x "');")} "#" "+ ")
+   (tblname-no-prf x)
+   (hdn-field x req-map)
+   [:ul {:class (tr-class x req-map) :id (str "ul_" x)}
+    (get-branch req-map map x)
+    [:br]]])
+
+(defn bullets
   "Create left side panel of Table - column tree"
   [req-map map]
-  (println "req-map: " req-map)
-  [:ul {:class "open"}
-   (for [x (sort (keys map))]
-     [:li (link-to {:style "text-decoration: none;" :id (str "img_" x) 
-                    :border "0" :onclick (str "toggle('" x "');")} "#" "+ ")
-      (tblname-no-prf x)
-      (hdn-field x req-map)
-      [:ul {:class (tr-class x req-map) :id (str "ul_" x)}
-       (get-branch req-map map x)
-       [:br]]])])
+  (let [seld (:SELECTED req-map)
+        kees (keys req-map)]
+    [:ul {:class "open"}
+     (for [x (sort (keys map))]
+       (if (nil? seld)
+         (li-table req-map map x)
+         (when (some (fn [i] (.startsWith (name i) (str CLM "." x "."))) kees)
+           (li-table req-map map x))))]))
 
-(defn
-  create-grid
+(defn create-records-lable
+  [cnt]
+  (label {:style "float:right;"} nil (str "No of records:" " " cnt)))
+
+(defn create-grid
   [caption clm-names-vec data-map]
   (list 
     [:div {:class "grid-div"} (grid clm-names-vec data-map)]
-        (label {:style "float:right;"} nil (str "No of records:" " " (count data-map)))))
+    (create-records-lable (count data-map))))
 
-(defn
-  get-options
+(defn get-options
   [mp]
   (map #(tblname-no-prf %) (keys mp)))
 
-(defn
-  create-list
+(defn create-list
   [req-map caption map]
   (list    
     [:div#root-div "Report for:  "
@@ -163,31 +158,36 @@
     [:div  (check-box "SELECTED" (:SELECTED req-map)) " Show Selected Only" ]))
 
 
-(defn 
-  create-schema
+(defn create-schema
   [req-map]
   (create-list req-map "Schema" (action/get-schema)))
 
-(defn 
-  create-result-table
+(defn create-result-table
   [req-map]
-  (let [res (action/get-result)]
-    (if (:Error res)
-      (create-grid "Result" nil res)
+  (let [res (action/get-result)
+        err (:Error res)]
+    (if err
+      (label {:class "err-msg"} "err" err)
       (create-grid "Result" (reverse (action/get-header-clms)) res))))
 
-(defn
-  create-run-btn
+(defn create-run-btn
   []
   (submit-button {:class "run"} "Run!"))
 
-(defn
-  create-reset-btn
+(defn create-reset-btn
   []
   [:div#reset (link-to "/" "Reset")])
 
-(defn
-  schema-form
+(defn result
+  [req-map]
+  (when-not (if-nil-or-empty req-map)
+    (action/create-query-seqs req-map)
+    [:div {:id "result" :class "res-div"} 
+     (if (if-nil-or-empty action/rt)
+       (label {:class "err-msg"} "errMsg" root-err)
+       (create-result-table req-map))]))
+
+(defn schema-form
   [req-map]
   [:div {:id "content"} 
    [:div {:id "schema-form" :class "schema-div"} 
@@ -196,9 +196,4 @@
       (create-schema req-map) 
       (create-reset-btn)
       (create-run-btn))]
-   (when-not (if-nil-or-empty req-map)
-     (action/create-query-seqs req-map)
-     [:div {:id "result" :class "res-div"} 
-      (if (if-nil-or-empty action/rt)
-        (label {:class "err-msg"} "errMsg" root-err)
-        (create-result-table req-map))])])
+   (result req-map)])

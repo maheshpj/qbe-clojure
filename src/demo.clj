@@ -1,14 +1,13 @@
 (ns ^{:author "Mahesh Jadhav"
-      :doc "Compojure app for demo."}
+      :doc "Compojure app for AutoQuery."}
   demo
   (:use [compojure.core :only (defroutes)]
-        [ring.adapter.jetty :only (run-jetty)]
-        [hiccup.middleware :only (wrap-base-url)])
+        [ring.adapter.jetty :only (run-jetty)])
   (:require [compojure.handler :as handler] 
             [controller.demo :as cntr]
             [compojure.route :as route]))
 
-(def host "localhost") ;"172.21.76.154"
+(def host "localhost") 
 (def port 8080)
 (def context nil)
 
@@ -20,8 +19,8 @@
 
 (def application (handler/site routes))
 
-(defn 
-  -main 
+(defn -main 
   [& args]
   (run-jetty application {:port port :join? false})
-  (println "Welcome to the AutoQuery Demo. Browse to" (str "http://" host ":" port) "to get started!"))
+  (println "Welcome to the AutoQuery Demo. Browse to" 
+           (str "http://" host ":" port) "to get started!"))

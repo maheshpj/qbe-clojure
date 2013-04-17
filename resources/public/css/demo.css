@@ -124,5 +124,9 @@ table tbody tr {
 	color: white; 
 	font-size: 15px;
 	}
-		
+
+#opt-div {
+	border: 1px solid lightgrey;
+	background-color: cadetblue;
+	}
 	

@@ -2,7 +2,7 @@
 
 ; Change following attrbute as per database
 ; valid values : postgres, oracle, mysql
-(def db-type "oracle")
+(def db-type "mysql")
 
 (def db-types {:oracle {
                         :type "oracle", 
@@ -24,17 +24,19 @@
                           :pwd "postgres"},
                :mysql {
                        :type "mysql", 
-                       :table_prefix "", 
-                       :schema "",
-                       :driver "",
-                       :subproto "",
-                       :url "",
-                       :user "",
-                       :pwd ""}})
+                       :table_prefix "ams", 
+                       :schema "ams_development",
+                       :driver "com.mysql.jdbc.Driver",
+                       :subproto "mysql",
+                       :url "//172.21.76.79:3306/ams_development",
+                       :user "ams_development",
+                       :pwd "password"}})
 
+(def meta_alias "MV_")
+
+; Change this values as per your DB
 (def rem-views '("AMS_ABSTRACT_ART_ASSET" "AMS_ABSTRACT_ASSET"))
 (def rem-metadata '("AMS_METADATA_FIELD" "AMS_METADATA_VALUE"))
 (def rem-clms '("REFERENCE_ID" "VERSION"))
 (def metadata-value {:TABLE "AMS_METADATA_VALUE", :COLUMN "NAME", :CODE-CLM "CODE"})
-(def meta_alias "MV_")
 (def no-mf-clms (list "CREATED_BY" "CREATED_DATE" "UPDATED_BY" "UPDATED_DATE" "VERSION" "REFERENCE_ID" "USER_VERSION"))
