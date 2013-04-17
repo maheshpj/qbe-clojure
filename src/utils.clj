@@ -1,7 +1,7 @@
 (ns utils
   (:require [clojure.string :only (trim upper-case replace blank?) :as st]))
 
-(def prf)
+(def prf "")
 (def CLM "CLM")
 (def TXT "TXT")
 (def ORD "ORD")
@@ -37,7 +37,7 @@
 
 (defn set-prf
   [pprf]
-  (def prf pprf))
+  (when-not (nil? pprf) (def prf pprf)))
 
 (defn parenthise
   [vl]

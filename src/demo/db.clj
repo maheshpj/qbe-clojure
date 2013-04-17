@@ -289,7 +289,8 @@
 
 (defn set-util-prf
   []
-  (set-prf (str (db-attr :table_prefix) "_")))
+  (let [pf (db-attr :table_prefix)]
+    (when-not (if-nil-or-empty pf) (set-prf (str pf "_")))))
 
 (defn create-pk-ralation
   [schm]

@@ -62,7 +62,7 @@
   [x y req-map]
   [:div {:id (create-id DIV x y)  
          :style (str "display:" (show-div x y req-map))} 
-   [:div#opt-div {:style "border: 1px solid lightgrey; background-color: darkslategrey"}
+   [:div#opt-div ;{:style "border: 1px solid lightgrey; background-color: darkslategrey"}
     (option-criteria x y req-map)
     (option-grp x y req-map)  
     (gen-cb-option x y req-map MTA "Code to Name")

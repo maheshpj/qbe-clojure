@@ -40,6 +40,10 @@ table thead {
 	color: dimgray;
 	}
 
+table thead tr th {
+	border-right: 1px solid silver;
+	}
+	
 table tbody tr td {
 	text-align: left; 
 	color: grey; 
