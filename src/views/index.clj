@@ -9,6 +9,7 @@
 
 (def root-err "Please select a 'Report for' value")
 (def form-enctype "application/x-www-form-urlencoded")
+(def beginning-time)
 
 (defn header-name
   [vect]
@@ -16,13 +17,13 @@
 
 (defn cell-style
   [x]
-  (str "color: " (if (map? x) "grey" "red")))
+  (str "color: " (if (map? x) "grey" "red") "; border-right: 1px solid silver;"))
 
 (defn grid
   [clm-names-vec data-map]
   [:table 
    [:thead
-    [:tr (map-tag :th nil (header-name (keys (first data-map))))]] 
+    [:tr (map-tag :th {:style "border-right: 1px solid silver;"} (header-name (keys (first data-map))))]] 
    [:tbody
     (for [x data-map] [:tr (map-tag :td {:style (cell-style x)} x)])]])
 
@@ -49,20 +50,20 @@
      (drop-down {:id grpname :class "drp-down"} 
                 grpname (cons nil group-fun) 
                 ((keyword grpname) req-map))
-     (label {:class "drp-dwn-lbl"} "Group" "Group") ]))
+     (label {:class "drp-dwn-lbl" :style "color: white"} "Group" "Group") ]))
 
 (defn gen-cb-option
   [x y req-map prfx nm]  
   (let [name (create-id prfx x y)]
       [:span
        (check-box {:id name :class "drp-down"} name ((keyword name) req-map))
-       (label {:class "drp-dwn-lbl"} nm nm)]))
+       (label {:class "drp-dwn-lbl" :style "color: white"} nm nm)]))
 
 (defn clm-options
   [x y req-map]
   [:div {:id (create-id DIV x y)  
          :style (str "display:" (show-div x y req-map))} 
-   [:div#opt-div ;{:style "border: 1px solid lightgrey; background-color: darkslategrey"}
+   [:div#opt-div {:style "border: 1px solid lightgrey; background-color: cadetblue; text-color: white"}
     (option-criteria x y req-map)
     (option-grp x y req-map)  
     (gen-cb-option x y req-map MTA "Code to Name")
@@ -107,7 +108,9 @@
 
 (defn tblname-no-prf
   [i]
-  (upper-case (replace-first i prf "")))
+  (if (if-nil-or-empty prf)
+    (upper-case i)
+    (upper-case (replace-first i prf ""))))
 
 (defn li-table
   [req-map map x]
@@ -135,11 +138,17 @@
   [cnt]
   (label {:style "float:right;"} nil (str "No of records:" " " cnt)))
 
+(defn create-time-lable
+  []
+  (label {:style "float:left; color: silver"} nil 
+         (str "Time taken:" " " (timeTaken beginning-time) " mins")))
+
 (defn create-grid
   [caption clm-names-vec data-map]
   (list 
     [:div {:class "grid-div"} (grid clm-names-vec data-map)]
-    (create-records-lable (count data-map))))
+    (create-records-lable (count data-map))
+    (create-time-lable)))
 
 (defn get-options
   [mp]
@@ -164,6 +173,7 @@
 
 (defn create-result-table
   [req-map]
+  (def beginning-time (java.util.Date.))
   (let [res (action/get-result)
         err (:Error res)]
     (if err

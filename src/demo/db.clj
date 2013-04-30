@@ -302,13 +302,14 @@
   "Creats a map of table : PK ralation"
   [schm]
   (when (nil? table-pk)
-    (def table-pk (create-pk-ralation schm))))
+    (def table-pk clin_rel))) 
+      ;(create-pk-ralation schm))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;  DB TABLE GRAPH  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn all-table-fk
   []
-  (map #(into {} (get-table-fk (db-attr :schema) %)) (keys cached-schema)))
+  (apply concat (map #(get-table-fk (db-attr :schema) %) (keys cached-schema))))
 
 (defn get-tbl-graph 
   [] 
@@ -327,7 +328,8 @@
 (defn create-db-graph
   []
   (when (nil? db-grph)
-    (def db-grph (get-db-graph))))
+    (def db-grph clin-dbgrph))) 
+      ;(get-db-graph))))
 
 ;;;;;;;;;;;;;; DATABASE SANITY CHECK ;;;;;;;;;;;;;;;;;;;
 

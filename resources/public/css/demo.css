@@ -48,6 +48,7 @@ table tbody tr td {
 	text-align: left; 
 	color: grey; 
 	border-top: 0px solid grey; 
+	border-right: 1px solid silver;
     background: -moz-linear-gradient(top, #fdfdfd, #e5e5e5);
 	}	
 

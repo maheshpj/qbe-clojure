@@ -20,7 +20,9 @@
        [:meta {:name "viewport" :content "width=device-width, initial-scale=1, maximum-scale=1"}]
        [:title "AutoQuery Demo"]
        (include-css "/css/demo.css")
-       (include-js "/js/demo.js")]
+       (include-js "/js/demo.js")
+       (include-js "/js/prototype.js")
+       (include-js "/js/scriptaculous.js")]
       [:body {:class "bdy"}
        (idx/schema-form req-map)])))
 

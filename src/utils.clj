@@ -1,4 +1,5 @@
 (ns utils
+  (:use [clojure.contrib.math])
   (:require [clojure.string :only (trim upper-case replace blank?) :as st]))
 
 (def prf "")
@@ -46,3 +47,13 @@
 (defn clm-up
   [vl]
   (str uppercase (parenthise (st/trim vl))))
+
+(defn round-places [number decimals]
+  (let [factor (expt 10 decimals)]
+    (bigdec (/ (round (* factor number)) factor))))
+
+(defn timeTaken
+  [start]
+  (round-places (double (/ (- (.getTime (java.util.Date.)) 
+                              (.getTime start)) 
+                           60000)) 2))

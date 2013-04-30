@@ -1,10 +1,12 @@
 (ns demo.action
   (:use [utils]
         [demo.db-config]
-        [clojure.set])
+        [clojure.set]
+        [clj-time.core  :exclude (extend)])
   (:require [demo.db :as db]
             [clojure.string :only (capitalize replace-first upper-case) :as st]))
 
+(def beginning-time)
 (def op)
 (def cr)
 (def rt)
@@ -17,7 +19,7 @@
 (def ch-ord)
 (def ch-cr)
 (def mem-mata-fields nil)
-(def err "Invalid Query")
+(def err "Invalid Report")
 (def err_grp "Please select only one Group Function column.")
 
 (defn filter-req
@@ -108,11 +110,14 @@
 
 (defn get-schema
   []
-  (db/set-util-prf)
-  (db/fetch-db-table-columns-map)
-  (db/get-pk-ralation db/cached-schema)
-  (db/create-db-graph)
-  db/cached-schema)
+  (let [beginning-time (java.util.Date.)]
+    (db/set-util-prf)
+    (db/fetch-db-table-columns-map)
+    (db/get-pk-ralation db/cached-schema)
+    (db/create-db-graph)
+    (println "Initialization complete :)") 
+    (println "Time taken:" (timeTaken beginning-time) "mins")
+    db/cached-schema))
 
 (defn create-headers
   [prefix replaceby coll]
