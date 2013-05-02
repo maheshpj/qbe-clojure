@@ -163,7 +163,7 @@
      (drop-down {:id RT} RT 
                 (cons nil (sort (get-options map))) 
                 (:RT req-map)) [:font {:class "required"} "    *"]]
-    [:div "Show " (link-to {:id "filtersel"} "#" "Selected") " | "
+    [:div {:align "right"} "Show " (link-to {:id "filtersel"} "#" "Selected") " | "
      (link-to {:id "filterseloff"} "#" "All")]
     [:div#list-div (bullets req-map map)]
     [:div
