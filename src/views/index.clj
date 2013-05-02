@@ -115,7 +115,7 @@
 (defn li-table
   [req-map map x]
   [:li (link-to {:style "text-decoration: none;" :id (str "img_" x) 
-                 :border "0" :onclick (str "toggle('" x "');")} "#" "+ ")
+                 :border "0" :onclick (str "toggle('" x "');")} "#" "+ ") ;
    (tblname-no-prf x)
    (hdn-field x req-map)
    [:ul {:class (tr-class x req-map) :id (str "ul_" x)}
@@ -124,15 +124,17 @@
 
 (defn bullets
   "Create left side panel of Table - column tree"
-  [req-map map]
-  (let [seld (:SELECTED req-map)
-        kees (keys req-map)]
-    [:ul {:class "open"}
-     (for [x (sort (keys map))]
-       (if (nil? seld)
-         (li-table req-map map x)
-         (when (some (fn [i] (.startsWith (name i) (str CLM "." x "."))) kees)
-           (li-table req-map map x))))]))
+  ([req-map] (bullets req-map (action/get-schema)))
+  ([req-map map]  
+    (println "bul req:" req-map)
+    (let [seld (:SELECTED req-map)
+          kees (keys req-map)]
+      [:ul {:class "open"}
+       (for [x (sort (keys map))]
+         (if (nil? seld)
+           (li-table req-map map x)
+           (when (some (fn [i] (.startsWith (name i) (str CLM "." x "."))) kees)
+             (li-table req-map map x))))])))
 
 (defn create-records-lable
   [cnt]
@@ -161,11 +163,12 @@
      (drop-down {:id RT} RT 
                 (cons nil (sort (get-options map))) 
                 (:RT req-map)) [:font {:class "required"} "    *"]]
+    [:div "Show " (link-to {:id "filtersel"} "#" "Selected") " | "
+     (link-to {:id "filterseloff"} "#" "All")]
     [:div#list-div (bullets req-map map)]
     [:div
-     (text-area {:id EXT :placeholder "Extra Column" :style "width:99%"} EXT (:EXT req-map))]
-    [:div  (check-box "SELECTED" (:SELECTED req-map)) " Show Selected Only" ]))
-
+     (text-area {:id EXT :placeholder "Extra Column" :style "width:99%"} 
+                EXT (:EXT req-map))]))
 
 (defn create-schema
   [req-map]
@@ -182,28 +185,28 @@
 
 (defn create-run-btn
   []
-  (submit-button {:class "run"} "Run!"))
+  (submit-button {:id "runbtn" :class "run" :type "button"} "Run!"))
 
 (defn create-reset-btn
   []
   [:div#reset (link-to "/" "Reset")])
 
 (defn result
-  [req-map]
+  [req-map]  
   (when-not (if-nil-or-empty req-map)
     (action/create-query-seqs req-map)
-    [:div {:id "result" :class "res-div"} 
-     (if (if-nil-or-empty action/rt)
-       (label {:class "err-msg"} "errMsg" root-err)
-       (create-result-table req-map))]))
+    (if (if-nil-or-empty action/rt)
+      (label {:class "err-msg"} "errMsg" root-err)
+      (create-result-table req-map))))
 
 (defn schema-form
   [req-map]
   [:div {:id "content"} 
    [:div {:id "schema-form" :class "schema-div"} 
     (form-to 
-      {:enctype form-enctype} [:post "/run"]
-      (create-schema req-map) 
+      {:enctype form-enctype :id "schemaForm"} [:post "/run"]
+      (create-schema req-map)
       (create-reset-btn)
       (create-run-btn))]
-   (result req-map)])
+   [:div {:id "result" :class "res-div"}
+    (result req-map)]])

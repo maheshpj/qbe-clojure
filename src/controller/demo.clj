@@ -19,19 +19,37 @@
        [:meta {:name "cache" :content "false"}]
        [:meta {:name "viewport" :content "width=device-width, initial-scale=1, maximum-scale=1"}]
        [:title "AutoQuery Demo"]
-       (include-css "/css/demo.css")
+       (include-css "/css/demo.css") 
        (include-js "/js/demo.js")
-       (include-js "/js/prototype.js")
-       (include-js "/js/scriptaculous.js")]
+       (include-js "/js/jquery-1.9.1.min.js")
+       (include-js "/js/ajaxed.js")]
       [:body {:class "bdy"}
        (idx/schema-form req-map)])))
+
+(defn process-req
+  [req]
+  (into {} 
+        (filter #(not (st/blank? (val %))) 
+                (keywordize-keys req))))
 
 (defn run
   [req]
   (if-not (if-nil-or-empty req)
-    (index (into {} (filter #(not (st/blank? (val %))) (keywordize-keys req))))
+    (html5 
+      (idx/result (process-req req)))
+    (ring/redirect "/")))
+
+(defn filtersel
+  [req toggle]
+  (if-not (if-nil-or-empty req)
+    (html5 
+      (if toggle
+        (idx/bullets (conj (process-req req) [:SELECTED "true"]))
+        (idx/bullets (process-req req))))
     (ring/redirect "/")))
 
 (defroutes routes
   (GET "/" [] (index))
-  (POST "/run" request (run (:form-params request))))
+  (POST "/run" request (run (:form-params request)))
+  (POST "/filtersel/on" request (filtersel (:form-params request) true))
+  (POST "/filtersel/off" request (filtersel (:form-params request) false)))
