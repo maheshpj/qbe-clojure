@@ -126,7 +126,6 @@
   "Create left side panel of Table - column tree"
   ([req-map] (bullets req-map (action/get-schema)))
   ([req-map map]  
-    (println "bul req:" req-map)
     (let [seld (:SELECTED req-map)
           kees (keys req-map)]
       [:ul {:class "open"}
